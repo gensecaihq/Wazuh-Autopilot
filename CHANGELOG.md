@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **New deployment guides**: `docs/HERMES_DEPLOYMENT.md` (install, config precedence, provider paths, MCP bridge, sandbox/skills security, troubleshooting) and `docs/NEMOCLAW_DEPLOYMENT.md` (prerequisites, install paths, all-NVIDIA inference options, policy tiers, sandbox config application, swarm scaling, ecosystem, troubleshooting); README, QUICKSTART, and AGENT_CONFIGURATION updated to reference the runtimes and personas.
 
 ### Changed
+- **OpenClaw compatibility corrected to v2026.7.1+**: prior docs stated a minimum of "v2026.7.3", a version that was never published (npm `latest` is `2026.7.1-2` as of 2026-08-06; `2026.7.2` exists only as beta). README, TROUBLESHOOTING, and AIR_GAPPED_DEPLOYMENT now state **v2026.7.1+ (tested with v2026.7.1-2)**; the earlier "Tested with OpenClaw v2026.7.3" changelog entry should be read as the 2026.7.1 stable line.
 - **Project renamed to Wazuh Autopilot**: the project is runtime-agnostic (OpenClaw, Hermes, NemoClaw), so the former "Wazuh OpenClaw Autopilot" name and repo references to `gensecaihq/Wazuh-Openclaw-Autopilot` are now "Wazuh Autopilot" / `gensecaihq/Wazuh-Autopilot` throughout docs, configs, and code (the npm package is now `wazuh-autopilot`).
 
 ### Security

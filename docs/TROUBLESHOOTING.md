@@ -158,7 +158,7 @@ Symptom: the gateway logs `Inbound app mention`, the provider call succeeds (`[m
 
 Work through these in order:
 
-1. **OpenClaw version** — the minimum supported version is **v2026.7.3** (see README prerequisites). Older gateways (e.g., 2026.6.x) predate several reply-dispatch fixes; upgrade first, then `openclaw doctor --fix`.
+1. **OpenClaw version** — the minimum supported version is **v2026.7.1** (latest stable line; tested with v2026.7.1-2). Older gateways (e.g., 2026.6.x, including the `extended-stable` channel) predate several reply-dispatch fixes. Upgrade with `npm install -g openclaw@latest`, then `openclaw doctor --fix`.
 2. **Model catalog not scanned (OpenRouter/custom providers)** — if you never ran `openclaw models scan`, the capability catalog lacks `toolUse: true`, the model's output degrades to tool-call text with `stopReason: "stop"`, and the session ends without a deliverable reply. This produces *exactly* "200 then silence." See [Tool calls not working (OpenRouter)](#tool-calls-not-working--agents-output-web_fetch-as-text-openrouter). Run:
    ```bash
    openclaw models scan && openclaw gateway restart

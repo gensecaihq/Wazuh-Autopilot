@@ -128,7 +128,7 @@ No alert sits unread. No playbook gets skipped. Every action has an evidence tra
 |---|---|
 | [Wazuh](https://wazuh.com) 4.8+ | SIEM platform, installed and running |
 | [Wazuh MCP Server](https://github.com/gensecaihq/Wazuh-MCP-Server) v4.2.1+ | MCP bridge for Wazuh API (48 tools) |
-| [OpenClaw](https://github.com/openclaw/openclaw) v2026.7.3+ | AI agent framework |
+| [OpenClaw](https://github.com/openclaw/openclaw) v2026.7.1+ | AI agent framework (latest stable; tested with v2026.7.1-2 — `npm install -g openclaw@latest`) |
 | Node.js 20+ | Runtime service (22+ recommended) |
 | LLM API Key | Claude, GPT, Groq, Mistral, or [local Ollama/vLLM](#local-llm-options) |
 
