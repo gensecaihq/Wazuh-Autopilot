@@ -1,6 +1,6 @@
 # Hermes Agent Runtime for Wazuh Autopilot
 
-This directory contains the [Nous Research Hermes Agent](https://github.com/NousResearch/hermes-agent) profile for Wazuh Autopilot — an alternative agent runtime to the default OpenClaw gateway.
+This directory contains the [Nous Research Hermes Agent](https://github.com/NousResearch/hermes-agent) profile for Wazuh Autopilot — an alternative agent runtime to the default OpenClaw gateway. Full step-by-step deployment guide: [docs/HERMES_DEPLOYMENT.md](../docs/HERMES_DEPLOYMENT.md).
 
 Hermes is a self-improving agent with an autonomous learning loop: it creates skills from experience, keeps persistent memory across sessions, and exposes both a CLI/TUI and a messaging gateway (Telegram, Discord, Slack, WhatsApp, Signal, Email). Where the OpenClaw profile runs seven pipeline agents behind a webhook gateway, the Hermes profile runs a **single SOC analyst agent** that works cases interactively (or via its messaging gateway) using the same Wazuh MCP server and Runtime API.
 

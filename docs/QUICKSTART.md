@@ -11,6 +11,8 @@ Get Wazuh Autopilot running in under 15 minutes.
 - **OpenClaw** for agent orchestration - [openclaw/openclaw](https://github.com/openclaw/openclaw)
 - **Root access** for installation
 
+> **Alternative agent runtimes**: this guide covers the default OpenClaw pipeline. To run the same Autopilot on Nous Research's Hermes Agent (analyst-assist / chat-ops) see [HERMES_DEPLOYMENT.md](HERMES_DEPLOYMENT.md); for a governed NVIDIA-stack deployment inside a NemoClaw/OpenShell sandbox (Nemotron models only) see [NEMOCLAW_DEPLOYMENT.md](NEMOCLAW_DEPLOYMENT.md).
+
 ## Step 1: Clone the Repository
 
 ```bash

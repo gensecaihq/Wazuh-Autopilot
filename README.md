@@ -180,7 +180,8 @@ curl http://localhost:9090/metrics
 | **Systemd** | Native Linux | `sudo ./install/install.sh` |
 | **Air-gapped** | Classified / offline | `sudo ./install/install.sh --mode bootstrap` + [guide](docs/AIR_GAPPED_DEPLOYMENT.md) |
 | **vLLM** | Self-hosted GPU | [vLLM Guide](docs/VLLM_DEPLOYMENT.md) |
-| **NemoClaw (NVIDIA)** | Governed / enterprise, NVIDIA stack | `curl -fsSL https://www.nvidia.com/nemoclaw.sh \| bash` + [guide](nemoclaw/README.md) |
+| **NemoClaw (NVIDIA)** | Governed / enterprise, NVIDIA stack | `curl -fsSL https://www.nvidia.com/nemoclaw.sh \| bash` + [guide](docs/NEMOCLAW_DEPLOYMENT.md) |
+| **Hermes Agent** | Analyst-assist / chat-ops | `curl -fsSL https://hermes-agent.nousresearch.com/install.sh \| bash` + [guide](docs/HERMES_DEPLOYMENT.md) |
 | **Manual** | Development | `cd runtime/autopilot-service && npm start` |
 
 ---
@@ -192,8 +193,8 @@ The Autopilot pipeline runs on your choice of agent runtime:
 | Runtime | Shape | Inference | Guide |
 |---|---|---|---|
 | **[OpenClaw](openclaw/README.md)** (default) | 7 pipeline agents, webhook-driven, 24/7 | Any provider | [openclaw/](openclaw/README.md) |
-| **[Hermes Agent](hermes/README.md)** (Nous Research) | Single self-improving SOC analyst + subagents; CLI/TUI and messaging gateway | Nous Portal, OpenRouter, any OpenAI-compatible endpoint | [hermes/](hermes/README.md) |
-| **[NemoClaw](nemoclaw/README.md)** (NVIDIA) | OpenClaw or Hermes wrapped in the NVIDIA OpenShell sandbox — policy enforcement outside the agent, managed inference, snapshots | **NVIDIA stack only**: Nemotron 3 via build.nvidia.com, local NIM, or Ollama-Nemotron | [nemoclaw/](nemoclaw/README.md) |
+| **[Hermes Agent](hermes/README.md)** (Nous Research) | Single self-improving SOC analyst + subagents; CLI/TUI and messaging gateway | Nous Portal, OpenRouter, any OpenAI-compatible endpoint | [HERMES_DEPLOYMENT.md](docs/HERMES_DEPLOYMENT.md) |
+| **[NemoClaw](nemoclaw/README.md)** (NVIDIA) | OpenClaw or Hermes wrapped in the NVIDIA OpenShell sandbox — policy enforcement outside the agent, managed inference, snapshots | **NVIDIA stack only**: Nemotron 3 via build.nvidia.com, local NIM, or Ollama-Nemotron | [NEMOCLAW_DEPLOYMENT.md](docs/NEMOCLAW_DEPLOYMENT.md) |
 
 > **NemoClaw rule**: a NemoClaw deployment is NVIDIA end-to-end — Nemotron 3 models, NIM/build.nvidia.com inference, OpenShell runtime. No third-party model providers. See [nemoclaw/README.md](nemoclaw/README.md).
 
@@ -393,7 +394,7 @@ Socket Mode — outbound-only, no webhooks or public endpoints required:
 │   ├── policy.yaml                 # Action allowlists, approvers, thresholds
 │   └── toolmap.yaml                # MCP tool mappings (9 action tools)
 ├── playbooks/                      # 7 incident response playbooks
-└── docs/                           # 15 documentation files
+└── docs/                           # 17 documentation files
 ```
 
 ---
@@ -487,8 +488,8 @@ Anthropic and Google have **banned** subscription-plan OAuth tokens (Claude Pro/
 | [AGENT_CONFIGURATION.md](docs/AGENT_CONFIGURATION.md) | Agent customization |
 | [AIR_GAPPED_DEPLOYMENT.md](docs/AIR_GAPPED_DEPLOYMENT.md) | Offline deployment with Ollama |
 | [VLLM_DEPLOYMENT.md](docs/VLLM_DEPLOYMENT.md) | GPU inference with vLLM |
-| [hermes/README.md](hermes/README.md) | Hermes Agent runtime (Nous Research) |
-| [nemoclaw/README.md](nemoclaw/README.md) | NemoClaw deployment on the NVIDIA stack |
+| [HERMES_DEPLOYMENT.md](docs/HERMES_DEPLOYMENT.md) | Hermes Agent runtime deployment (Nous Research) |
+| [NEMOCLAW_DEPLOYMENT.md](docs/NEMOCLAW_DEPLOYMENT.md) | NemoClaw deployment on the NVIDIA stack (OpenShell, Nemotron, NIM) |
 | [MCP_INTEGRATION.md](docs/MCP_INTEGRATION.md) | MCP server integration |
 | [AGENT_COMMUNICATION.md](docs/AGENT_COMMUNICATION.md) | Agent-to-runtime architecture |
 | [TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md) | Common issues and fixes |

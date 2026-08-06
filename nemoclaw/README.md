@@ -1,6 +1,6 @@
 # NemoClaw Deployment (NVIDIA Stack) for Wazuh Autopilot
 
-This directory contains the [NVIDIA NemoClaw](https://github.com/NVIDIA/NemoClaw) profile for Wazuh Autopilot. NemoClaw is NVIDIA's enterprise distribution for running agents — OpenClaw, Hermes, LangChain Deep Agents — inside the **NVIDIA OpenShell** sandbox runtime with managed inference, network policies, snapshots, and lifecycle operations.
+This directory contains the [NVIDIA NemoClaw](https://github.com/NVIDIA/NemoClaw) profile for Wazuh Autopilot. Full step-by-step deployment guide: [docs/NEMOCLAW_DEPLOYMENT.md](../docs/NEMOCLAW_DEPLOYMENT.md). NemoClaw is NVIDIA's enterprise distribution for running agents — OpenClaw, Hermes, LangChain Deep Agents — inside the **NVIDIA OpenShell** sandbox runtime with managed inference, network policies, snapshots, and lifecycle operations.
 
 > **Rule: NemoClaw deployments run on the NVIDIA stack — end to end.**
 >

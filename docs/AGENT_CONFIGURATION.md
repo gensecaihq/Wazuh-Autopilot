@@ -45,9 +45,9 @@ Each agent has a workspace directory containing OpenClaw standard files:
 | File | Loaded | Purpose |
 |------|--------|---------|
 | `AGENTS.md` | Always | Main operating instructions — Wazuh rule IDs, entity extraction, severity maps, algorithms, output JSON formats |
-| `SOUL.md` | Always | Shared SOC principles — evidence standards, blast radius minimization, false positive handling, auditability |
+| `SOUL.md` | Always | Shared SOC principles — evidence standards, blast radius minimization, false positive handling, auditability — plus the SOC team roster mapping each agent to its human role |
 | `USER.md` | Always | Organizational context — industry, compliance, critical assets, noise sources, SOC shifts, escalation paths |
-| `IDENTITY.md` | Always | Agent identity — role, what it does/doesn't do, pipeline position, what downstream consumers need |
+| `IDENTITY.md` | Always | Agent identity — security-expert persona (human SOC role: Tier 1/2/3 analyst, IR Lead, Compliance Officer, SecOps Engineer, SOC Manager), what it does/doesn't do, pipeline position, what downstream consumers need |
 | `TOOLS.md` | Always | Tool usage guidance — query patterns, field path differences (Linux/Windows/AWS), API endpoints, pitfalls |
 | `HEARTBEAT.md` | Cron runs | Step-by-step checklist for scheduled executions (triage sweeps, correlation recycles, report generation) |
 | `MEMORY.md` | Private | Persistent learnings — false positive patterns, confirmed attacks, tuning notes, efficiency optimizations |
@@ -55,7 +55,8 @@ Each agent has a workspace directory containing OpenClaw standard files:
 ### Customization
 
 - **`USER.md`**: Edit `_shared/USER.md` before install (or per-agent after install) to set your organization's industry, compliance frameworks, critical asset patterns, known noise sources, and SOC team structure
-- **`SOUL.md`**: Edit `_shared/SOUL.md` to adjust operating principles (evidence thresholds, blast radius preferences, speed vs completeness tradeoffs)
+- **`SOUL.md`**: Edit `_shared/SOUL.md` to adjust operating principles (evidence thresholds, blast radius preferences, speed vs completeness tradeoffs) and the SOC team roster
+- **`IDENTITY.md`**: Edit per-agent to adjust the persona — each agent operates as a named human SOC role (e.g., triage = Tier 1 SOC Analyst, investigation = DFIR Investigator) with defined expertise and handoffs; keep personas aligned with the roster in `SOUL.md`
 - **`AGENTS.md`**: Edit per-agent to modify domain-specific behavior (severity mappings, correlation thresholds, investigation playbooks, KPI targets)
 - **`MEMORY.md`**: Seed with known false positive patterns or tuning notes; agents will add to this during operation
 
