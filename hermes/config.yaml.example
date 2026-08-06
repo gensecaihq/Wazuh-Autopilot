@@ -1,0 +1,132 @@
+# =============================================================================
+# WAZUH AUTOPILOT — Hermes Agent Configuration (~/.hermes/config.yaml)
+# =============================================================================
+# Runtime: Nous Research Hermes Agent (https://github.com/NousResearch/hermes-agent)
+#
+# Hermes runs as a single self-improving SOC analyst agent that reaches Wazuh
+# through the same MCP server and Runtime API used by the OpenClaw profiles.
+# Copy this file to ~/.hermes/config.yaml and put secrets in ~/.hermes/.env
+# (Hermes routes secrets to .env automatically via `hermes config set`).
+#
+# Install:  curl -fsSL https://hermes-agent.nousresearch.com/install.sh | bash
+# Setup:    hermes setup        (wizard: provider, credentials, tools)
+# Verify:   hermes config check
+#
+# NVIDIA-stack note: if you run Hermes inside NVIDIA NemoClaw (`nemohermes
+# onboard`), inference MUST stay on the NVIDIA stack — set the custom
+# endpoint block below to build.nvidia.com or a local NIM, with Nemotron
+# models. See ../nemoclaw/README.md.
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# PRIMARY MODEL
+# -----------------------------------------------------------------------------
+# Default: OpenRouter (single key, many models). Alternatives:
+#   - Nous Portal:  provider: "nous"      (hermes setup --portal)
+#   - NVIDIA stack: provider: "custom" + base_url below (REQUIRED under NemoClaw)
+model:
+  provider: "openrouter"
+  default: "anthropic/claude-sonnet-4-5"
+  base_url: ""                  # leave empty for provider default
+  api_key: ""                   # keep empty — set OPENROUTER_API_KEY in ~/.hermes/.env
+  timeout_seconds: 1800
+  context_length: null          # auto-detect
+
+# --- NVIDIA-stack variant (uncomment when running under NemoClaw) ------------
+# model:
+#   provider: "custom"
+#   default: "nvidia/nemotron-3-super-120b-a12b"
+#   base_url: "https://integrate.api.nvidia.com/v1"   # or http://127.0.0.1:8000/v1 for local NIM
+#   api_key: ${NVIDIA_API_KEY}
+#   timeout_seconds: 1800
+
+# -----------------------------------------------------------------------------
+# AUXILIARY MODELS (vision / web extract / context compression)
+# -----------------------------------------------------------------------------
+# "main" reuses the primary model — keeps single-provider deployments
+# (air-gapped, NVIDIA-only) from silently calling a second cloud.
+auxiliary:
+  vision:
+    provider: "main"
+  web_extract:
+    provider: "main"
+  compression:
+    provider: "main"
+
+# -----------------------------------------------------------------------------
+# WAZUH AUTOPILOT MCP + RUNTIME API
+# -----------------------------------------------------------------------------
+# The Wazuh MCP server is HTTP-based; bridge it to Hermes' stdio MCP client
+# with mcp-remote. MCP_URL / AUTOPILOT_MCP_AUTH go in ~/.hermes/.env.
+mcp_servers:
+  wazuh:
+    command: "npx"
+    args:
+      - "-y"
+      - "mcp-remote"
+      - "${MCP_URL}"
+      - "--header"
+      - "Authorization: Bearer ${AUTOPILOT_MCP_AUTH}"
+
+# -----------------------------------------------------------------------------
+# AGENT BEHAVIOR
+# -----------------------------------------------------------------------------
+agent:
+  max_turns: 200
+  api_max_retries: 3
+  reasoning_effort: "high"      # SOC investigation benefits from deeper reasoning
+  # Hermes' skill/memory toolsets stay enabled — they replace OpenClaw's
+  # MEMORY.md accumulation (FP patterns, attack signatures, tuning notes).
+  disabled_toolsets: []
+
+# -----------------------------------------------------------------------------
+# TERMINAL SANDBOX
+# -----------------------------------------------------------------------------
+# Mirror OpenClaw's "sandbox mode: all". Docker backend, no host mounts,
+# network enabled only so the agent can reach MCP_URL / AUTOPILOT_RUNTIME_URL.
+terminal:
+  backend: "docker"
+  docker_image: "nikolaik/python-nodejs:python3.11-nodejs20"
+  docker_mount_cwd_to_workspace: false
+  docker_network: true
+  docker_forward_env:
+    - "MCP_URL"
+    - "AUTOPILOT_MCP_AUTH"
+    - "AUTOPILOT_RUNTIME_URL"
+  container_memory: 4096
+  timeout: 180
+
+# -----------------------------------------------------------------------------
+# MEMORY (persistent across sessions — Hermes-native)
+# -----------------------------------------------------------------------------
+memory:
+  memory_enabled: true
+  user_profile_enabled: true
+  write_approval: false
+
+# -----------------------------------------------------------------------------
+# SKILLS
+# -----------------------------------------------------------------------------
+# Hermes creates skills from experience. For a SOC deployment, guard writes so
+# a prompt-injected alert cannot silently persist a malicious skill.
+skills:
+  guard_agent_created: true
+  write_approval: true
+
+# -----------------------------------------------------------------------------
+# CONTEXT COMPRESSION — long triage sessions
+# -----------------------------------------------------------------------------
+compression:
+  enabled: true
+  threshold: 0.50
+  target_ratio: 0.20
+  protect_last_n: 20
+  in_place: true
+
+# -----------------------------------------------------------------------------
+# TOOL OUTPUT LIMITS — Wazuh queries can return large result sets
+# -----------------------------------------------------------------------------
+tool_output:
+  max_bytes: 50000
+  max_lines: 2000
+  max_line_length: 2000

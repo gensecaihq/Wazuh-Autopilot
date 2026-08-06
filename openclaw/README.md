@@ -117,6 +117,7 @@ OpenClaw supports multiple LLM providers. Configure in `openclaw.json`:
 | [Ollama](https://ollama.ai/) | `llama3.3`, `mistral`, `codellama` | **Local/free** inference | N/A |
 | [Together](https://together.xyz/) | Various open-source | Open-source hosting | `TOGETHER_API_KEY` |
 | [Cerebras](https://cerebras.ai/) | Cerebras models | Ultra-fast inference | `CEREBRAS_API_KEY` |
+| [NVIDIA](https://build.nvidia.com/) | `nvidia/nemotron-3-ultra-550b-a55b`, `nvidia/nemotron-3-super-120b-a12b` | NVIDIA stack / [NemoClaw](../nemoclaw/README.md) (mandatory there) | `NVIDIA_API_KEY` |
 
 ### Model Configuration
 

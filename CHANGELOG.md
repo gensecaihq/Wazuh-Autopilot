@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **Hermes Agent runtime profile (`hermes/`)**: run the pipeline on Nous Research's self-improving [hermes-agent](https://github.com/NousResearch/hermes-agent) — `config.yaml.example` (model, Wazuh MCP bridge via `mcp-remote`, Docker terminal sandbox, guarded skills), `env.example`, and a runtime guide. Same Runtime API and two-tier approval workflow as OpenClaw.
+- **NemoClaw NVIDIA-stack profile (`nemoclaw/`)**: run the OpenClaw agents inside an [NVIDIA NemoClaw](https://github.com/NVIDIA/NemoClaw) OpenShell sandbox — `openclaw-nemoclaw.json` pinned to the NVIDIA stack only (Nemotron 3 Ultra/Super/Nano via build.nvidia.com, local NIM microservices, or Ollama-Nemotron), plus a deployment guide covering OpenShell policy tiers, `inference.local` routing, hardware (DGX Spark/Station, RTX PRO), and the related NVIDIA ecosystem (NeMo, NIM, Nemotron). NemoClaw deployments do not use third-party model providers.
+- **Security-expert personas for all 7 agents**: each `IDENTITY.md` now carries an explicit human SOC role — Tier 1 Analyst (triage), Tier 2 Analyst/Detection Engineer (correlation), Tier 3/DFIR Investigator (investigation), IR Lead (response-planner), Compliance Officer (policy-guard), Security Operations Engineer (responder), SOC Manager/Metrics Analyst (reporting) — with expertise and team handoffs; shared `SOUL.md` gains the team roster so agents operate as a human security ops team, and the README documents scaling the team into a swarm.
+- **Test coverage**: `openclaw-config.test.js` now validates `openclaw-vllm.json` (previously untested) and `nemoclaw/openclaw-nemoclaw.json`.
+
+### Changed
+- **Project renamed to Wazuh Autopilot**: the project is runtime-agnostic (OpenClaw, Hermes, NemoClaw), so the former "Wazuh OpenClaw Autopilot" name and repo references to `gensecaihq/Wazuh-Openclaw-Autopilot` are now "Wazuh Autopilot" / `gensecaihq/Wazuh-Autopilot` throughout docs, configs, and code (the npm package is now `wazuh-autopilot`).
+
 ### Security
 - **Protected-target deny-list**: new `protected_targets` section in `policy.yaml` (IPs/CIDRs + agent IDs). `block_ip`/`firewall_drop`/`host_deny` are refused for deny-listed IPs and `isolate_host`/`restart_wazuh` for deny-listed agents — at plan creation and again at execution (defense-in-depth). Prevents an attacker-controlled alert field (e.g. spoofed `srcip`) from steering active-response at gateways/DNS/the manager. Defaults protect loopback and agent `000` (manager).
 - **Slack approvals now authorized**: `/wazuh approve|execute` and the approve/execute buttons now run `policyCheckApprover` (by Slack user ID) plus a workspace/channel allowlist check before approving or executing — previously anyone who could click the button could trigger real active-response. Placeholder-aware so dev/bootstrap is unaffected.
@@ -339,12 +348,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Responder Agent
   - Reporting Agent
 
-[Unreleased]: https://github.com/gensecaihq/Wazuh-Openclaw-Autopilot/compare/v2.4.3...HEAD
-[2.4.3]: https://github.com/gensecaihq/Wazuh-Openclaw-Autopilot/compare/v2.4.2...v2.4.3
-[2.4.2]: https://github.com/gensecaihq/Wazuh-Openclaw-Autopilot/compare/v2.4.0...v2.4.2
-[2.4.0]: https://github.com/gensecaihq/Wazuh-Openclaw-Autopilot/compare/v2.3.0...v2.4.0
-[2.3.0]: https://github.com/gensecaihq/Wazuh-Openclaw-Autopilot/compare/v2.2.0...v2.3.0
-[2.2.0]: https://github.com/gensecaihq/Wazuh-Openclaw-Autopilot/compare/v2.1.0...v2.2.0
-[2.1.0]: https://github.com/gensecaihq/Wazuh-Openclaw-Autopilot/compare/v2.0.0...v2.1.0
-[2.0.0]: https://github.com/gensecaihq/Wazuh-Openclaw-Autopilot/compare/v1.0.0...v2.0.0
-[1.0.0]: https://github.com/gensecaihq/Wazuh-Openclaw-Autopilot/releases/tag/v1.0.0
+[Unreleased]: https://github.com/gensecaihq/Wazuh-Autopilot/compare/v2.4.3...HEAD
+[2.4.3]: https://github.com/gensecaihq/Wazuh-Autopilot/compare/v2.4.2...v2.4.3
+[2.4.2]: https://github.com/gensecaihq/Wazuh-Autopilot/compare/v2.4.0...v2.4.2
+[2.4.0]: https://github.com/gensecaihq/Wazuh-Autopilot/compare/v2.3.0...v2.4.0
+[2.3.0]: https://github.com/gensecaihq/Wazuh-Autopilot/compare/v2.2.0...v2.3.0
+[2.2.0]: https://github.com/gensecaihq/Wazuh-Autopilot/compare/v2.1.0...v2.2.0
+[2.1.0]: https://github.com/gensecaihq/Wazuh-Autopilot/compare/v2.0.0...v2.1.0
+[2.0.0]: https://github.com/gensecaihq/Wazuh-Autopilot/compare/v1.0.0...v2.0.0
+[1.0.0]: https://github.com/gensecaihq/Wazuh-Autopilot/releases/tag/v1.0.0

@@ -9,7 +9,7 @@
 
 ## Security Model
 
-Wazuh OpenClaw Autopilot implements a defense-in-depth security model:
+Wazuh Autopilot implements a defense-in-depth security model:
 
 ### Autonomy Levels
 
@@ -114,7 +114,7 @@ Security updates are released as patch versions (e.g., 2.0.1, 2.0.2).
 
 Subscribe to releases to receive notifications:
 - Watch this repository with "Releases only"
-- Check the [Releases](https://github.com/gensecaihq/Wazuh-Openclaw-Autopilot/releases) page
+- Check the [Releases](https://github.com/gensecaihq/Wazuh-Autopilot/releases) page
 
 ## Acknowledgments
 

@@ -1,5 +1,5 @@
 /**
- * Integration tests for the Wazuh OpenClaw Autopilot Runtime Service.
+ * Integration tests for the Wazuh Autopilot Runtime Service.
  *
  * These tests exercise the HTTP endpoints end-to-end using Node's built-in
  * test runner and the http module.  No external test dependencies are needed.
@@ -144,7 +144,7 @@ describe("Health, Metrics, Ready, Version endpoints", () => {
   it("GET /version returns service name, version, and node version", async () => {
     const res = await request(server, "GET", "/version");
     assert.equal(res.status, 200);
-    assert.equal(res.body.service, "wazuh-openclaw-autopilot");
+    assert.equal(res.body.service, "wazuh-autopilot");
     assert.ok(res.body.version);
     assert.ok(res.body.node);
   });

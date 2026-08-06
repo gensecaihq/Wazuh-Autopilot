@@ -4,18 +4,18 @@
   <a href="https://modelcontextprotocol.io"><img src="https://img.shields.io/badge/MCP-6B4FBB?style=for-the-badge&logoColor=white" alt="MCP"/></a>
 </p>
 
-<h1 align="center">Wazuh OpenClaw Autopilot</h1>
+<h1 align="center">Wazuh Autopilot</h1>
 
 <p align="center">
   <strong>Turn your Wazuh SIEM into an autonomous SOC with AI agents that triage, investigate, and respond — while humans stay in control.</strong>
 </p>
 
 <p align="center">
-  <a href="https://github.com/gensecaihq/Wazuh-Openclaw-Autopilot/releases"><img src="https://img.shields.io/github/v/release/gensecaihq/Wazuh-Openclaw-Autopilot?color=green&label=release" alt="Release"/></a>
-  <a href="https://github.com/gensecaihq/Wazuh-Openclaw-Autopilot/blob/main/LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="License: MIT"/></a>
-  <a href="https://github.com/gensecaihq/Wazuh-Openclaw-Autopilot/actions"><img src="https://img.shields.io/github/actions/workflow/status/gensecaihq/Wazuh-Openclaw-Autopilot/ci.yml?label=CI" alt="CI"/></a>
-  <a href="https://github.com/gensecaihq/Wazuh-Openclaw-Autopilot/issues"><img src="https://img.shields.io/github/issues/gensecaihq/Wazuh-Openclaw-Autopilot" alt="Issues"/></a>
-  <a href="https://github.com/gensecaihq/Wazuh-Openclaw-Autopilot/stargazers"><img src="https://img.shields.io/github/stars/gensecaihq/Wazuh-Openclaw-Autopilot" alt="Stars"/></a>
+  <a href="https://github.com/gensecaihq/Wazuh-Autopilot/releases"><img src="https://img.shields.io/github/v/release/gensecaihq/Wazuh-Autopilot?color=green&label=release" alt="Release"/></a>
+  <a href="https://github.com/gensecaihq/Wazuh-Autopilot/blob/main/LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="License: MIT"/></a>
+  <a href="https://github.com/gensecaihq/Wazuh-Autopilot/actions"><img src="https://img.shields.io/github/actions/workflow/status/gensecaihq/Wazuh-Autopilot/ci.yml?label=CI" alt="CI"/></a>
+  <a href="https://github.com/gensecaihq/Wazuh-Autopilot/issues"><img src="https://img.shields.io/github/issues/gensecaihq/Wazuh-Autopilot" alt="Issues"/></a>
+  <a href="https://github.com/gensecaihq/Wazuh-Autopilot/stargazers"><img src="https://img.shields.io/github/stars/gensecaihq/Wazuh-Autopilot" alt="Stars"/></a>
 </p>
 
 <p align="center">
@@ -135,8 +135,8 @@ No alert sits unread. No playbook gets skipped. Every action has an evidence tra
 ### Install
 
 ```bash
-git clone https://github.com/gensecaihq/Wazuh-Openclaw-Autopilot.git
-cd Wazuh-Openclaw-Autopilot
+git clone https://github.com/gensecaihq/Wazuh-Autopilot.git
+cd Wazuh-Autopilot
 sudo ./install/install.sh
 ```
 
@@ -180,7 +180,34 @@ curl http://localhost:9090/metrics
 | **Systemd** | Native Linux | `sudo ./install/install.sh` |
 | **Air-gapped** | Classified / offline | `sudo ./install/install.sh --mode bootstrap` + [guide](docs/AIR_GAPPED_DEPLOYMENT.md) |
 | **vLLM** | Self-hosted GPU | [vLLM Guide](docs/VLLM_DEPLOYMENT.md) |
+| **NemoClaw (NVIDIA)** | Governed / enterprise, NVIDIA stack | `curl -fsSL https://www.nvidia.com/nemoclaw.sh \| bash` + [guide](nemoclaw/README.md) |
 | **Manual** | Development | `cd runtime/autopilot-service && npm start` |
+
+---
+
+## Agent Runtimes
+
+The Autopilot pipeline runs on your choice of agent runtime:
+
+| Runtime | Shape | Inference | Guide |
+|---|---|---|---|
+| **[OpenClaw](openclaw/README.md)** (default) | 7 pipeline agents, webhook-driven, 24/7 | Any provider | [openclaw/](openclaw/README.md) |
+| **[Hermes Agent](hermes/README.md)** (Nous Research) | Single self-improving SOC analyst + subagents; CLI/TUI and messaging gateway | Nous Portal, OpenRouter, any OpenAI-compatible endpoint | [hermes/](hermes/README.md) |
+| **[NemoClaw](nemoclaw/README.md)** (NVIDIA) | OpenClaw or Hermes wrapped in the NVIDIA OpenShell sandbox — policy enforcement outside the agent, managed inference, snapshots | **NVIDIA stack only**: Nemotron 3 via build.nvidia.com, local NIM, or Ollama-Nemotron | [nemoclaw/](nemoclaw/README.md) |
+
+> **NemoClaw rule**: a NemoClaw deployment is NVIDIA end-to-end — Nemotron 3 models, NIM/build.nvidia.com inference, OpenShell runtime. No third-party model providers. See [nemoclaw/README.md](nemoclaw/README.md).
+
+All runtimes share the same Wazuh MCP server, Runtime API, and two-tier human approval workflow.
+
+### Scaling to a Swarm
+
+The seven agents form a virtual SOC team (see [agent personas](openclaw/agents/_shared/SOUL.md)) — and the same roles scale horizontally into a swarm when alert volume demands it:
+
+- **OpenClaw**: raise `agents.defaults.maxConcurrent` and per-agent heartbeat frequency — each webhook delivery and heartbeat run is an independent session, so one triage agent definition fans out across many alerts in parallel.
+- **Hermes**: the analyst agent spawns isolated **subagents** for parallel workstreams (e.g., one per pivot during a multi-host investigation).
+- **NemoClaw**: run multiple OpenShell sandboxes (`NEMOCLAW_SANDBOX_NAME=wazuh-autopilot-{1..n}`) behind the same Runtime API for fleet-style isolation — each sandbox is independently policed, snapshotted, and rollback-able.
+
+Whatever the swarm size, every response action still funnels through the single Policy Guard gate and two-tier human approval — more workers, same chain of command.
 
 ---
 
@@ -195,6 +222,7 @@ OpenClaw is model-agnostic. Use any provider:
 | [Groq](https://console.groq.com/) | Ultra-fast inference | Free tier available |
 | [Ollama](https://ollama.com) | Air-gapped / free | Free (local) |
 | [vLLM](https://github.com/vllm-project/vllm) | Self-hosted GPU inference | Hardware only |
+| [NVIDIA build.nvidia.com](https://build.nvidia.com) | Nemotron 3 hosted / NIM local — required for [NemoClaw](nemoclaw/README.md) | Free tier available |
 
 Plus OpenAI, Google, Mistral, xAI, Together, Cerebras. See [full provider guide](#provider-details) below.
 
@@ -355,6 +383,8 @@ Socket Mode — outbound-only, no webhooks or public endpoints required:
 ├── openclaw/
 │   ├── openclaw.json               # Gateway & model config
 │   └── agents/                     # 7 SOC agents (AGENTS.md, TOOLS.md, IDENTITY.md)
+├── hermes/                         # Hermes Agent runtime profile (Nous Research)
+├── nemoclaw/                       # NemoClaw profile — NVIDIA stack only (Nemotron/NIM/OpenShell)
 ├── runtime/autopilot-service/
 │   ├── index.js                    # Runtime service (6400+ LOC)
 │   ├── slack.js                    # Slack Socket Mode integration
@@ -457,6 +487,8 @@ Anthropic and Google have **banned** subscription-plan OAuth tokens (Claude Pro/
 | [AGENT_CONFIGURATION.md](docs/AGENT_CONFIGURATION.md) | Agent customization |
 | [AIR_GAPPED_DEPLOYMENT.md](docs/AIR_GAPPED_DEPLOYMENT.md) | Offline deployment with Ollama |
 | [VLLM_DEPLOYMENT.md](docs/VLLM_DEPLOYMENT.md) | GPU inference with vLLM |
+| [hermes/README.md](hermes/README.md) | Hermes Agent runtime (Nous Research) |
+| [nemoclaw/README.md](nemoclaw/README.md) | NemoClaw deployment on the NVIDIA stack |
 | [MCP_INTEGRATION.md](docs/MCP_INTEGRATION.md) | MCP server integration |
 | [AGENT_COMMUNICATION.md](docs/AGENT_COMMUNICATION.md) | Agent-to-runtime architecture |
 | [TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md) | Common issues and fixes |
@@ -478,8 +510,8 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 
 ## Community
 
-- [GitHub Discussions](https://github.com/gensecaihq/Wazuh-Openclaw-Autopilot/discussions) — Questions, ideas, deployment help
-- [GitHub Issues](https://github.com/gensecaihq/Wazuh-Openclaw-Autopilot/issues) — Bug reports and feature requests
+- [GitHub Discussions](https://github.com/gensecaihq/Wazuh-Autopilot/discussions) — Questions, ideas, deployment help
+- [GitHub Issues](https://github.com/gensecaihq/Wazuh-Autopilot/issues) — Bug reports and feature requests
 
 ---
 

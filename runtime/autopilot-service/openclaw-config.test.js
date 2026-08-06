@@ -6,7 +6,7 @@
  * actually registered in the API request and agents get stopReason "tool_use"
  * instead of "stop".
  *
- * See: https://github.com/gensecaihq/Wazuh-Openclaw-Autopilot/issues/16
+ * See: https://github.com/gensecaihq/Wazuh-Autopilot/issues/16
  *
  * Run:  node --test openclaw-config.test.js
  */
@@ -79,6 +79,8 @@ const ROOT = path.resolve(__dirname, "..", "..");
 const CONFIGS = [
   { name: "openclaw.json", path: path.join(ROOT, "openclaw", "openclaw.json") },
   { name: "openclaw-airgapped.json", path: path.join(ROOT, "openclaw", "openclaw-airgapped.json") },
+  { name: "openclaw-vllm.json", path: path.join(ROOT, "openclaw", "openclaw-vllm.json") },
+  { name: "openclaw-nemoclaw.json", path: path.join(ROOT, "nemoclaw", "openclaw-nemoclaw.json") },
 ];
 
 // ---------------------------------------------------------------------------
@@ -229,6 +231,89 @@ describe("OpenClaw config tool registration (issue #16)", () => {
       });
     });
   }
+});
+
+describe("NemoClaw profile is NVIDIA-stack only", () => {
+  // Project rule: a NemoClaw deployment runs on the NVIDIA stack end to end —
+  // Nemotron models via build.nvidia.com / local NIM / Ollama-Nemotron.
+  // No third-party model providers or keys may appear in this profile.
+  const cfgPath = path.join(ROOT, "nemoclaw", "openclaw-nemoclaw.json");
+  const NON_NVIDIA_KEYS = [
+    "ANTHROPIC_API_KEY", "OPENAI_API_KEY", "GOOGLE_API_KEY", "GROQ_API_KEY",
+    "MISTRAL_API_KEY", "XAI_API_KEY", "OPENROUTER_API_KEY", "TOGETHER_API_KEY",
+    "CEREBRAS_API_KEY",
+  ];
+  const NVIDIA_PROVIDERS = ["nvidia", "nim-local"];
+
+  let config;
+
+  it("parses without error", () => {
+    config = loadJson5(cfgPath);
+    assert.ok(config);
+  });
+
+  it("env contains no non-NVIDIA provider keys", () => {
+    config = config || loadJson5(cfgPath);
+    for (const key of NON_NVIDIA_KEYS) {
+      assert.equal(
+        config.env?.[key],
+        undefined,
+        `NemoClaw profile must not reference ${key} — NVIDIA stack only`,
+      );
+    }
+  });
+
+  it("only NVIDIA providers are configured", () => {
+    config = config || loadJson5(cfgPath);
+    const providers = Object.keys(config.models?.providers || {});
+    assert.ok(providers.length > 0, "Should define at least one provider");
+    for (const p of providers) {
+      assert.ok(
+        NVIDIA_PROVIDERS.includes(p),
+        `Provider '${p}' is not an NVIDIA-stack provider (${NVIDIA_PROVIDERS.join(", ")})`,
+      );
+    }
+  });
+
+  it("every model reference resolves to an NVIDIA provider", () => {
+    config = config || loadJson5(cfgPath);
+    const refs = [];
+    const collect = (m) => {
+      if (!m) return;
+      if (typeof m === "string") refs.push(m);
+      else {
+        if (m.primary) refs.push(m.primary);
+        for (const f of m.fallbacks || []) refs.push(f);
+      }
+    };
+    collect(config.agents?.defaults?.model);
+    if (config.agents?.defaults?.heartbeat?.model) refs.push(config.agents.defaults.heartbeat.model);
+    for (const alias of Object.keys(config.agents?.defaults?.models || {})) refs.push(alias);
+    for (const agent of config.agents?.list || []) {
+      collect(agent.model);
+      if (agent.heartbeat?.model) refs.push(agent.heartbeat.model);
+    }
+    assert.ok(refs.length > 0, "Should have model references");
+    for (const ref of refs) {
+      const provider = ref.split("/")[0];
+      assert.ok(
+        NVIDIA_PROVIDERS.includes(provider),
+        `Model ref '${ref}' does not use an NVIDIA provider`,
+      );
+    }
+  });
+
+  it("all provider models are Nemotron family", () => {
+    config = config || loadJson5(cfgPath);
+    for (const [name, provider] of Object.entries(config.models?.providers || {})) {
+      for (const model of provider.models || []) {
+        assert.ok(
+          /nemotron/i.test(model.id),
+          `Provider '${name}' model '${model.id}' is not a Nemotron model`,
+        );
+      }
+    }
+  });
 });
 
 describe("install.sh config template uses alsoAllow", () => {

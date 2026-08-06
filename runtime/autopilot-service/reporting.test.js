@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Wazuh OpenClaw Autopilot - Reporting Endpoints Tests
+ * Wazuh Autopilot - Reporting Endpoints Tests
  */
 
 const { describe, it, before, after, beforeEach, afterEach } = require("node:test");

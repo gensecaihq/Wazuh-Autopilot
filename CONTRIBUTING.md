@@ -1,6 +1,6 @@
-# Contributing to Wazuh OpenClaw Autopilot
+# Contributing to Wazuh Autopilot
 
-Thank you for your interest in contributing to Wazuh OpenClaw Autopilot! This document provides guidelines and information for contributors.
+Thank you for your interest in contributing to Wazuh Autopilot! This document provides guidelines and information for contributors.
 
 ## Code of Conduct
 
@@ -24,7 +24,7 @@ When reporting bugs, please include:
 
 1. **Fork the repository**
    ```bash
-   git clone https://github.com/gensecaihq/Wazuh-Openclaw-Autopilot.git
+   git clone https://github.com/gensecaihq/Wazuh-Autopilot.git
    ```
 
 2. **Create a feature branch**
@@ -89,8 +89,8 @@ feat: Add Teams integration support
 
 ```bash
 # Clone the repository
-git clone https://github.com/gensecaihq/Wazuh-Openclaw-Autopilot.git
-cd Wazuh-Openclaw-Autopilot
+git clone https://github.com/gensecaihq/Wazuh-Autopilot.git
+cd Wazuh-Autopilot
 
 # Install (skip Tailscale for dev/testing)
 sudo ./install/install.sh --skip-tailscale
@@ -112,7 +112,7 @@ node index.js
 ## Project Structure
 
 ```
-Wazuh-Openclaw-Autopilot/
+Wazuh-Autopilot/
 ├── openclaw/
 │   ├── openclaw.json           # Gateway & model configuration
 │   └── agents/                 # 7 SOC agents (AGENTS.md, IDENTITY.md, TOOLS.md, MEMORY.md)
@@ -219,4 +219,4 @@ By contributing, you agree that your contributions will be licensed under the MI
 
 ---
 
-Thank you for contributing to Wazuh OpenClaw Autopilot!
+Thank you for contributing to Wazuh Autopilot!

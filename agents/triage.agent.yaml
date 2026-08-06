@@ -1,5 +1,5 @@
 # =============================================================================
-# WAZUH OPENCLAW AUTOPILOT - TRIAGE AGENT
+# WAZUH AUTOPILOT - TRIAGE AGENT
 # =============================================================================
 # Role: First responder - Alert analysis, entity extraction, case creation
 # Permission Level: READ-ONLY (Safe for full automation)

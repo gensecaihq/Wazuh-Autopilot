@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # =============================================================================
-# WAZUH OPENCLAW AUTOPILOT - SECURE TURNKEY INSTALLER
+# WAZUH AUTOPILOT - SECURE TURNKEY INSTALLER
 # =============================================================================
 #
 # Security-hardened installer for autonomous SOC on Wazuh.
@@ -165,7 +165,7 @@ parse_args() {
                 show_help
                 ;;
             --version|-v)
-                echo "Wazuh OpenClaw Autopilot Installer v$VERSION"
+                echo "Wazuh Autopilot Installer v$VERSION"
                 exit 0
                 ;;
             *)
@@ -215,7 +215,7 @@ show_security_banner() {
     echo -e "${GREEN}${BOLD}"
     echo "  ╔═══════════════════════════════════════════════════════════════╗"
     echo "  ║                                                               ║"
-    echo "  ║     WAZUH OPENCLAW AUTOPILOT                                  ║"
+    echo "  ║     WAZUH AUTOPILOT                                  ║"
     echo "  ║     Security-Hardened Installation                            ║"
     echo "  ║                                                               ║"
     echo "  ║     Version: $VERSION                                            ║"
@@ -1177,8 +1177,8 @@ install_runtime_service() {
         fi
         cat > /etc/systemd/system/wazuh-autopilot.service << EOF
 [Unit]
-Description=Wazuh OpenClaw Autopilot Runtime (Localhost Only)
-Documentation=https://github.com/gensecaihq/Wazuh-Openclaw-Autopilot
+Description=Wazuh Autopilot Runtime (Localhost Only)
+Documentation=https://github.com/gensecaihq/Wazuh-Autopilot
 After=network.target wazuh-mcp-server.service
 Wants=wazuh-mcp-server.service
 
@@ -1403,7 +1403,7 @@ configure_system() {
     _generated_at=$(date -Iseconds)
     cat > "$CONFIG_DIR/.env" << 'ENVEOF'
 # =============================================================================
-# WAZUH OPENCLAW AUTOPILOT - SECURITY HARDENED CONFIGURATION
+# WAZUH AUTOPILOT - SECURITY HARDENED CONFIGURATION
 # =============================================================================
 # Two-tier human approval required for all actions
 # =============================================================================
@@ -1658,7 +1658,7 @@ configure_wazuh_integrator() {
         # Create integrator script
         cat > /var/ossec/integrations/wazuh-autopilot << SCRIPT
 #!/bin/bash
-# Wazuh OpenClaw Autopilot Integration
+# Wazuh Autopilot Integration
 # Forwards alerts to localhost runtime service
 # Wazuh integratord passes the alert JSON file as \$1
 
@@ -1689,7 +1689,7 @@ SCRIPT
 
         # Add integration config
         local INTEGRATOR_CONFIG="
-  <!-- Wazuh OpenClaw Autopilot - Localhost Only -->
+  <!-- Wazuh Autopilot - Localhost Only -->
   <integration>
     <name>wazuh-autopilot</name>
     <hook_url>http://$GATEWAY_BIND:$RUNTIME_PORT/api/alerts</hook_url>

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # =============================================================================
-# WAZUH OPENCLAW AUTOPILOT - FULL STACK HEALTH CHECK
+# WAZUH AUTOPILOT - FULL STACK HEALTH CHECK
 # =============================================================================
 #
 # Verifies connectivity and configuration of all components:
@@ -432,7 +432,7 @@ check_disk_space() {
 main() {
     if ! $JSON_MODE; then
         echo ""
-        echo -e "  ${BOLD}Wazuh OpenClaw Autopilot - Health Check${NC}"
+        echo -e "  ${BOLD}Wazuh Autopilot - Health Check${NC}"
         echo -e "  $(date -Iseconds)"
         echo ""
     fi

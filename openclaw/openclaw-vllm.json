@@ -1,6 +1,6 @@
 {
   // =============================================================================
-  // WAZUH OPENCLAW AUTOPILOT — vLLM Configuration (Self-Hosted GPU Inference)
+  // WAZUH AUTOPILOT — vLLM Configuration (Self-Hosted GPU Inference)
   // =============================================================================
   // JSON5 format: comments and trailing commas are allowed.
   //

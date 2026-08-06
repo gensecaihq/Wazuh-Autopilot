@@ -1,5 +1,5 @@
 # =============================================================================
-# WAZUH OPENCLAW AUTOPILOT - POLICY GUARD AGENT
+# WAZUH AUTOPILOT - POLICY GUARD AGENT
 # =============================================================================
 # Role: Gatekeeper - Policy enforcement, compliance validation, action approval
 # Permission Level: POLICY-ENFORCEMENT (Cannot execute actions - only validates)

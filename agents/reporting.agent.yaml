@@ -1,5 +1,5 @@
 # =============================================================================
-# WAZUH OPENCLAW AUTOPILOT - REPORTING AGENT
+# WAZUH AUTOPILOT - REPORTING AGENT
 # =============================================================================
 # Role: Analyst - Operational metrics, KPIs, digests, trend analysis
 # Permission Level: READ-ONLY (Safe for full automation)

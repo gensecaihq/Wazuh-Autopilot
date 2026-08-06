@@ -1,7 +1,7 @@
 {
-  "name": "wazuh-openclaw-autopilot-service",
+  "name": "wazuh-autopilot-service",
   "version": "1.0.0",
-  "description": "Wazuh OpenClaw Autopilot Runtime Service - Evidence packs, approvals, metrics",
+  "description": "Wazuh Autopilot Runtime Service - Evidence packs, approvals, metrics",
   "main": "index.js",
   "bin": {
     "autopilot-service": "./index.js"
@@ -23,12 +23,12 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/gensecaihq/Wazuh-Openclaw-Autopilot.git"
+    "url": "https://github.com/gensecaihq/Wazuh-Autopilot.git"
   },
   "bugs": {
-    "url": "https://github.com/gensecaihq/Wazuh-Openclaw-Autopilot/issues"
+    "url": "https://github.com/gensecaihq/Wazuh-Autopilot/issues"
   },
-  "homepage": "https://github.com/gensecaihq/Wazuh-Openclaw-Autopilot#readme",
+  "homepage": "https://github.com/gensecaihq/Wazuh-Autopilot#readme",
   "license": "MIT",
   "engines": {
     "node": ">=20.0.0"

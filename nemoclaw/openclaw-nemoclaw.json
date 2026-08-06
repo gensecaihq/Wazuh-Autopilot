@@ -1,23 +1,57 @@
 {
   // =============================================================================
-  // WAZUH AUTOPILOT — OpenClaw Gateway Configuration
+  // WAZUH AUTOPILOT — NemoClaw Configuration (NVIDIA Stack ONLY)
   // =============================================================================
   // JSON5 format: comments and trailing commas are allowed.
-  // Validated by OpenClaw's strict zod schema — unknown keys prevent startup.
-  // Run `openclaw doctor --fix` to diagnose issues.
   //
-  // This is a REFERENCE TEMPLATE. The installer (install.sh) generates the
-  // production config at ~/.openclaw/openclaw.json.
+  // This profile runs the OpenClaw agents INSIDE an NVIDIA NemoClaw sandbox
+  // (OpenShell runtime). NemoClaw deployments MUST stay on the NVIDIA stack:
   //
-  // Model format: "provider/model-name" (e.g., "anthropic/claude-sonnet-4-5")
-  // Built-in providers: anthropic, openai, google, groq, mistral, xai
-  // Custom providers (Ollama, OpenRouter, etc.): configure in "models" section
-  // API keys: set via environment variables or in the "env" section below
+  //   - Models:    NVIDIA Nemotron 3 family ONLY (Ultra / Super / Nano)
+  //   - Inference: build.nvidia.com hosted endpoints, local NIM microservices
+  //                (TensorRT-LLM), or Ollama serving Nemotron models
+  //   - Runtime:   OpenShell sandbox with out-of-process policy enforcement
+  //   - Hardware:  DGX Spark, DGX Station, RTX PRO workstations, GeForce RTX,
+  //                or WSL2 hosts (GPU optional for hosted inference)
   //
-  // IMPORTANT: Use pay-per-token API keys only. Anthropic and Google have banned
-  // subscription OAuth tokens (Claude Pro/Max, Google AI Ultra) in third-party
-  // agent tools. Using them will result in account suspension. OpenRouter is the
-  // safest option — it routes to Claude, GPT, Gemini via a single billing proxy.
+  // Do NOT add Anthropic/OpenAI/Google/etc. providers or keys to this file.
+  // If you want mixed cloud providers, use openclaw/openclaw.json (plain
+  // OpenClaw) instead — NemoClaw's value is the governed, single-vendor path.
+  //
+  // Install NemoClaw (creates the OpenShell sandbox with a fresh OpenClaw):
+  //
+  //   curl -fsSL https://www.nvidia.com/nemoclaw.sh | \
+  //     NEMOCLAW_ACCEPT_THIRD_PARTY_SOFTWARE=1 \
+  //     NEMOCLAW_AGENT=openclaw \
+  //     NEMOCLAW_PROVIDER=build \
+  //     NVIDIA_INFERENCE_API_KEY=nvapi-... \
+  //     NEMOCLAW_SANDBOX_NAME=wazuh-autopilot \
+  //     bash
+  //
+  // Then apply this config inside the sandbox (see nemoclaw/README.md):
+  //
+  //   nemoclaw wazuh-autopilot connect
+  //   # inside sandbox:
+  //   cp openclaw-nemoclaw.json ~/.openclaw/openclaw.json
+  //   cp -r openclaw/agents ~/.openclaw/wazuh-autopilot/
+  //   openclaw models scan       # REQUIRED — populates toolUse capability for
+  //                              # openai-completions providers; without it,
+  //                              # tool calls are emitted as plain text.
+  //   openclaw doctor --fix
+  //
+  // Local NIM (self-hosted, TensorRT-LLM optimized) example:
+  //
+  //   docker run --gpus all -p 8000:8000 \
+  //     -e NGC_API_KEY=$NGC_API_KEY \
+  //     nvcr.io/nim/nvidia/nemotron-3-nano-30b-a3b:latest
+  //   # Verify served model id: curl http://127.0.0.1:8000/v1/models
+  //
+  // Ollama alternative (experimental in NemoClaw):
+  //
+  //   ollama pull nemotron-3-nano:30b
+  //   curl -fsSL https://www.nvidia.com/nemoclaw.sh | \
+  //     NEMOCLAW_NON_INTERACTIVE=1 NEMOCLAW_PROVIDER=ollama \
+  //     NEMOCLAW_MODEL=nemotron-3-nano:30b bash
   // =============================================================================
 
   // ---------------------------------------------------------------------------
@@ -41,60 +75,143 @@
   },
 
   // ---------------------------------------------------------------------------
+  // MODEL PROVIDERS — NVIDIA STACK ONLY
+  // ---------------------------------------------------------------------------
+  // "nvidia"    — build.nvidia.com hosted endpoints (OpenAI-compatible).
+  //               Model refs are "nvidia/" + full catalog id, so the doubled
+  //               "nvidia/nvidia/..." below is intentional.
+  // "nim-local" — self-hosted NIM microservice on this host (TensorRT-LLM).
+  //               The model "id" MUST match the NIM's served model name —
+  //               verify with: curl http://127.0.0.1:8000/v1/models
+  // ---------------------------------------------------------------------------
+  "models": {
+    "providers": {
+      "nvidia": {
+        "baseUrl": "https://integrate.api.nvidia.com/v1",
+        "api": "openai-completions",
+        "apiKey": "${NVIDIA_API_KEY}",
+        "models": [
+          // ---------------------------------------------------------------
+          // Nemotron 3 Super 120B (A12B MoE) — RECOMMENDED default
+          // Strong agentic/tool calling, 1M context, fast + cost-efficient
+          // ---------------------------------------------------------------
+          {
+            "id": "nvidia/nemotron-3-super-120b-a12b",
+            "name": "Nemotron 3 Super 120B (build.nvidia.com)",
+            "reasoning": true,
+            "input": ["text"],
+            "cost": { "input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0 },
+            "contextWindow": 1000000,
+            "maxTokens": 8192
+          },
+
+          // ---------------------------------------------------------------
+          // Nemotron 3 Ultra 550B (A55B MoE) — highest capability, 1M context
+          // Use for complex investigation / response planning fallback
+          // ---------------------------------------------------------------
+          {
+            "id": "nvidia/nemotron-3-ultra-550b-a55b",
+            "name": "Nemotron 3 Ultra 550B (build.nvidia.com)",
+            "reasoning": true,
+            "input": ["text"],
+            "cost": { "input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0 },
+            "contextWindow": 1000000,
+            "maxTokens": 8192
+          },
+
+          // ---------------------------------------------------------------
+          // Nemotron 3 Nano 30B (A3B MoE) — cheap/fast for heartbeats, reports
+          // Verify exact catalog id with:
+          //   curl https://integrate.api.nvidia.com/v1/models \
+          //     -H "Authorization: Bearer $NVIDIA_API_KEY" | grep nemotron
+          // ---------------------------------------------------------------
+          {
+            "id": "nvidia/nemotron-3-nano-30b-a3b",
+            "name": "Nemotron 3 Nano 30B (build.nvidia.com)",
+            "reasoning": true,
+            "input": ["text"],
+            "cost": { "input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0 },
+            "contextWindow": 131072,
+            "maxTokens": 8192
+          }
+        ]
+      },
+
+      "nim-local": {
+        "baseUrl": "http://127.0.0.1:8000/v1",
+        "api": "openai-completions",
+        "apiKey": "${NIM_API_KEY}",
+        "models": [
+          // ---------------------------------------------------------------
+          // Local NIM — Nemotron 3 Nano 30B (TensorRT-LLM optimized)
+          // Runs on a single 24GB+ GPU (RTX PRO / GeForce RTX / DGX Spark).
+          // Fully offline path: pair with OpenShell "Restricted" policy tier.
+          // ---------------------------------------------------------------
+          {
+            "id": "nvidia/nemotron-3-nano-30b-a3b",
+            "name": "Nemotron 3 Nano 30B (local NIM)",
+            "reasoning": true,
+            "input": ["text"],
+            "cost": { "input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0 },
+            "contextWindow": 131072,
+            "maxTokens": 8192
+          }
+        ]
+      }
+    }
+  },
+
+  // ---------------------------------------------------------------------------
   // AGENT CONFIGURATION
   // ---------------------------------------------------------------------------
   "agents": {
     "defaults": {
       "workspace": "~/.openclaw/wazuh-autopilot/workspace",
 
-      // Primary model + ordered fallbacks for all agents
-      // IMPORTANT: If using OpenRouter, prefix ALL model names with "openrouter/":
-      //   "primary": "openrouter/anthropic/claude-sonnet-4-5"
-      //   "fallbacks": ["openrouter/openai/gpt-4o"]
-      // OpenClaw uses the prefix before the first "/" to select the provider.
-      // Without the prefix, it tries the direct provider API (requires that key).
+      // Hosted Nemotron primary; local NIM as offline fallback.
+      // For fully air-gapped DGX/RTX deployments, swap primary to
+      // "nim-local/nvidia/nemotron-3-nano-30b-a3b" and remove the hosted refs.
       "model": {
-        "primary": "anthropic/claude-sonnet-4-5",
+        "primary": "nvidia/nvidia/nemotron-3-super-120b-a12b",
         "fallbacks": [
-          "openai/gpt-4o",
-          "groq/llama-3.3-70b-versatile"
+          "nvidia/nvidia/nemotron-3-ultra-550b-a55b",
+          "nim-local/nvidia/nemotron-3-nano-30b-a3b"
         ]
       },
 
-      // Model aliases for quick switching via /model command
       "models": {
-        "anthropic/claude-sonnet-4-5": { "alias": "sonnet" },
-        "anthropic/claude-haiku-4-5": { "alias": "haiku" },
-        "openai/gpt-4o": { "alias": "gpt4o" },
-        "groq/llama-3.3-70b-versatile": { "alias": "groq" }
+        "nvidia/nvidia/nemotron-3-super-120b-a12b": { "alias": "super" },
+        "nvidia/nvidia/nemotron-3-ultra-550b-a55b": { "alias": "ultra" },
+        "nvidia/nvidia/nemotron-3-nano-30b-a3b": { "alias": "nano" },
+        "nim-local/nvidia/nemotron-3-nano-30b-a3b": { "alias": "nim" }
       },
 
+      // OpenShell already sandboxes the whole gateway (out-of-process policy
+      // enforcement), but keep OpenClaw's inner sandbox too — defense in depth.
       "sandbox": {
         "mode": "all",
         "scope": "session",
         // Issue #18 fix: web_fetch is not in the sandbox default allow list.
-        // Without this, agents get "Tool web_fetch not found" even when
-        // tools.alsoAllow includes web_fetch at the agent level.
         "tools": {
           "alsoAllow": ["web_fetch"]
         }
       },
 
-      // Heartbeat: periodic health/sweep tasks using cheap model
+      // Heartbeat on Nano — cheap periodic sweeps
       "heartbeat": {
         "every": "30m",
-        "model": "anthropic/claude-haiku-4-5"
+        "model": "nvidia/nvidia/nemotron-3-nano-30b-a3b"
       },
 
-      // Memory search using embeddings
+      // Local embeddings — no non-NVIDIA cloud dependency for memory search
       "memorySearch": {
         "sources": ["memory", "sessions"],
-        "provider": "openai",
-        "model": "text-embedding-3-small"
+        "provider": "local",
+        "model": "hf:ggml-org/embeddinggemma-300M-GGUF/embeddinggemma-300M.gguf"
       },
 
       "maxConcurrent": 3,
-      "timeoutSeconds": 600
+      "timeoutSeconds": 900
     },
 
     "list": [
@@ -136,6 +253,10 @@
         "id": "wazuh-investigation",
         "workspace": "~/.openclaw/wazuh-autopilot/agents/investigation",
         "agentDir": "~/.openclaw/wazuh-autopilot/agents/investigation",
+        "model": {
+          "primary": "nvidia/nvidia/nemotron-3-ultra-550b-a55b",
+          "fallbacks": ["nvidia/nvidia/nemotron-3-super-120b-a12b"]
+        },
         "tools": {
           "profile": "minimal",
           "alsoAllow": ["read", "edit", "web_fetch", "sessions_list", "sessions_history"],
@@ -179,8 +300,8 @@
         "workspace": "~/.openclaw/wazuh-autopilot/agents/responder",
         "agentDir": "~/.openclaw/wazuh-autopilot/agents/responder",
         "model": {
-          "primary": "anthropic/claude-sonnet-4-5",
-          "fallbacks": ["openai/gpt-4o"]
+          "primary": "nvidia/nvidia/nemotron-3-super-120b-a12b",
+          "fallbacks": ["nvidia/nvidia/nemotron-3-ultra-550b-a55b"]
         },
         "tools": {
           "profile": "coding",
@@ -201,7 +322,7 @@
         "id": "wazuh-reporting",
         "workspace": "~/.openclaw/wazuh-autopilot/agents/reporting",
         "agentDir": "~/.openclaw/wazuh-autopilot/agents/reporting",
-        "model": "anthropic/claude-haiku-4-5",
+        "model": "nvidia/nvidia/nemotron-3-nano-30b-a3b",
         "tools": {
           "profile": "minimal",
           "alsoAllow": ["read", "write", "web_fetch", "sessions_list", "sessions_history"],
@@ -210,44 +331,6 @@
       }
     ]
   },
-
-  // ---------------------------------------------------------------------------
-  // CHANNEL CONFIGURATION
-  // ---------------------------------------------------------------------------
-  // Slack is optional. Without it, agents operate via REST API and heartbeats.
-  // Set SLACK_BOT_TOKEN and SLACK_APP_TOKEN in env to enable.
-  // ---------------------------------------------------------------------------
-  "channels": {
-    "slack": {
-      "enabled": true,
-      "botToken": "${SLACK_BOT_TOKEN}",
-      "appToken": "${SLACK_APP_TOKEN}",
-      "dmPolicy": "allowlist",
-      "groupPolicy": "allowlist"
-    }
-  },
-
-  // ---------------------------------------------------------------------------
-  // MULTI-AGENT ROUTING
-  // ---------------------------------------------------------------------------
-  // Bindings route Slack messages to agents. Remove this section if Slack is
-  // not used — agents will still operate via REST API and heartbeats.
-  "bindings": [
-    {
-      "agentId": "wazuh-responder",
-      "match": {
-        "channel": "slack",
-        "peer": { "kind": "group", "id": "approvals" }
-      }
-    },
-    {
-      "agentId": "wazuh-triage",
-      "match": {
-        "channel": "slack",
-        "peer": { "kind": "group", "id": "*" }
-      }
-    }
-  ],
 
   // ---------------------------------------------------------------------------
   // GLOBAL TOOL POLICY
@@ -263,10 +346,7 @@
   },
 
   // ---------------------------------------------------------------------------
-  // CRON — Enable scheduled heartbeats and tasks
-  // ---------------------------------------------------------------------------
-  // Agent heartbeats handle periodic sweeps (triage/10m, correlation/5m).
-  // Additional cron jobs can be added via: openclaw cron add
+  // CRON
   // ---------------------------------------------------------------------------
   "cron": {
     "enabled": true,
@@ -276,16 +356,13 @@
   // ---------------------------------------------------------------------------
   // HOOKS — Webhook endpoints for Wazuh alert routing
   // ---------------------------------------------------------------------------
+  // NOTE: the runtime service must be reachable from inside the OpenShell
+  // sandbox. Add MCP_URL and AUTOPILOT_RUNTIME_URL to the sandbox's network
+  // policy allowlist (see nemoclaw/README.md — Policy Tiers).
   "hooks": {
     "enabled": true,
     "path": "/webhook",
     "token": "${OPENCLAW_WEBHOOK_TOKEN}",
-    // allowUnsafeExternalContent: Webhook payloads come from our own runtime
-    // service on loopback (127.0.0.1), authenticated by hooks.token. Without
-    // this flag, OpenClaw wraps the message in an EXTERNAL_UNTRUSTED_CONTENT
-    // security envelope that instructs the model NOT to execute tools mentioned
-    // in the message — which blocks agents from calling web_fetch to advance
-    // the pipeline. Safe here because the webhook source is trusted internal.
     "mappings": [
       {
         "match": { "path": "wazuh-alert" },
@@ -339,21 +416,12 @@
   },
 
   // ---------------------------------------------------------------------------
-  // ENVIRONMENT VARIABLES
-  // ---------------------------------------------------------------------------
-  // API keys for LLM providers. Only configure keys for providers you use.
-  // These can also be set as system environment variables.
+  // ENVIRONMENT VARIABLES — NVIDIA stack + Autopilot integration ONLY
   // ---------------------------------------------------------------------------
   "env": {
-    "ANTHROPIC_API_KEY": "${ANTHROPIC_API_KEY}",
-    "OPENAI_API_KEY": "${OPENAI_API_KEY}",
-    "GOOGLE_API_KEY": "${GOOGLE_API_KEY}",
-    "GROQ_API_KEY": "${GROQ_API_KEY}",
-    "MISTRAL_API_KEY": "${MISTRAL_API_KEY}",
-    "XAI_API_KEY": "${XAI_API_KEY}",
-    "OPENROUTER_API_KEY": "${OPENROUTER_API_KEY}",
-    "TOGETHER_API_KEY": "${TOGETHER_API_KEY}",
-    "CEREBRAS_API_KEY": "${CEREBRAS_API_KEY}",
+    "NVIDIA_API_KEY": "${NVIDIA_API_KEY}",
+    "NIM_API_KEY": "${NIM_API_KEY}",
+    "OPENCLAW_TOKEN": "${OPENCLAW_TOKEN}",
     "OPENCLAW_WEBHOOK_TOKEN": "${OPENCLAW_WEBHOOK_TOKEN}",
     "MCP_URL": "${MCP_URL}",
     "AUTOPILOT_MCP_AUTH": "${AUTOPILOT_MCP_AUTH}",

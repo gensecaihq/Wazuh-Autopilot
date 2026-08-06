@@ -1,5 +1,5 @@
 # =============================================================================
-# Wazuh OpenClaw Autopilot - Production Dockerfile
+# Wazuh Autopilot - Production Dockerfile
 # =============================================================================
 # Multi-stage build for minimal production image
 # Base: Node.js 22 Alpine (LTS until April 2027)
@@ -79,8 +79,8 @@ ENTRYPOINT ["/sbin/tini", "--"]
 CMD ["node", "index.js"]
 
 # Labels for container metadata
-LABEL org.opencontainers.image.title="Wazuh OpenClaw Autopilot" \
+LABEL org.opencontainers.image.title="Wazuh Autopilot" \
       org.opencontainers.image.description="Autonomous SOC layer for Wazuh using OpenClaw agents" \
       org.opencontainers.image.vendor="GenSecAI" \
-      org.opencontainers.image.source="https://github.com/gensecaihq/Wazuh-Openclaw-Autopilot" \
+      org.opencontainers.image.source="https://github.com/gensecaihq/Wazuh-Autopilot" \
       org.opencontainers.image.licenses="MIT"

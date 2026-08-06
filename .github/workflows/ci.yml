@@ -1,5 +1,5 @@
 # =============================================================================
-# Wazuh OpenClaw Autopilot - CI/CD Pipeline
+# Wazuh Autopilot - CI/CD Pipeline
 # =============================================================================
 # Runs on push and pull request to main branch
 # - Lint: ESLint code quality checks

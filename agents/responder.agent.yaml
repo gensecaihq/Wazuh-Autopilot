@@ -1,5 +1,5 @@
 # =============================================================================
-# WAZUH OPENCLAW AUTOPILOT - RESPONDER AGENT
+# WAZUH AUTOPILOT - RESPONDER AGENT
 # =============================================================================
 # Role: Executor - Approved action execution with verification and rollback
 # Permission Level: ACTION EXECUTOR (Requires explicit enablement + approval)

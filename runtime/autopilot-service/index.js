@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Wazuh OpenClaw Autopilot Runtime Service
+ * Wazuh Autopilot Runtime Service
  *
  * Minimal runtime providing:
  * - Evidence pack persistence
@@ -4151,7 +4151,7 @@ function createServer() {
       if (url.pathname === "/version" && req.method === "GET") {
         res.writeHead(200, { "Content-Type": JSON_CONTENT_TYPE });
         res.end(JSON.stringify({
-          service: "wazuh-openclaw-autopilot",
+          service: "wazuh-autopilot",
           version: SERVICE_VERSION,
           node: process.version,
         }));

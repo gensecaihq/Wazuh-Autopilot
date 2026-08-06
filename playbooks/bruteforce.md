@@ -2088,7 +2088,7 @@ improvement_cycle:
 - Shodan: https://www.shodan.io/
 
 ### Tools and Utilities
-- Wazuh Autopilot: https://github.com/[organization]/wazuh-openclaw-autopilot
+- Wazuh Autopilot: https://github.com/[organization]/wazuh-autopilot
 - OpenClaw Framework: https://github.com/[organization]/openclaw
 - Evidence Collection Scripts: /tools/evidence-collection/
 

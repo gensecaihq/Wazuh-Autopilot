@@ -1,5 +1,5 @@
 /**
- * ESLint Configuration for Wazuh OpenClaw Autopilot
+ * ESLint Configuration for Wazuh Autopilot
  *
  * Rules focused on:
  * - Node.js best practices

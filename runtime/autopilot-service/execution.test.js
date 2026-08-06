@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Wazuh OpenClaw Autopilot - Plan Execution Tests
+ * Wazuh Autopilot - Plan Execution Tests
  *
  * Tests the full executePlan path with responder ENABLED
  * and a mock MCP server. Each test file runs in its own

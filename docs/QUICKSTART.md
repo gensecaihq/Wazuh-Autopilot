@@ -1,6 +1,6 @@
-# Wazuh OpenClaw Autopilot - Quick Start Guide
+# Wazuh Autopilot - Quick Start Guide
 
-Get Wazuh OpenClaw Autopilot running in under 15 minutes.
+Get Wazuh Autopilot running in under 15 minutes.
 
 ## Prerequisites
 
@@ -14,8 +14,8 @@ Get Wazuh OpenClaw Autopilot running in under 15 minutes.
 ## Step 1: Clone the Repository
 
 ```bash
-git clone https://github.com/gensecaihq/Wazuh-Openclaw-Autopilot.git
-cd Wazuh-Openclaw-Autopilot
+git clone https://github.com/gensecaihq/Wazuh-Autopilot.git
+cd Wazuh-Autopilot
 ```
 
 ## Step 2: Run the Installer

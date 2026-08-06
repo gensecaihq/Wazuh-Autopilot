@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Wazuh OpenClaw Autopilot - Runtime Service Tests
+ * Wazuh Autopilot - Runtime Service Tests
  */
 
 const { describe, it, before, after, beforeEach, afterEach } = require("node:test");

@@ -1,6 +1,6 @@
 # vLLM Deployment Guide
 
-Run Wazuh OpenClaw Autopilot with self-hosted open-source models via [vLLM](https://github.com/vllm-project/vllm). Zero cloud API costs, full data sovereignty.
+Run Wazuh Autopilot with self-hosted open-source models via [vLLM](https://github.com/vllm-project/vllm). Zero cloud API costs, full data sovereignty.
 
 ## Quick Start
 

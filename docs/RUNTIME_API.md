@@ -87,7 +87,7 @@ Returns service version information. Exempt from rate limiting and authenticatio
 **Response:**
 ```json
 {
-  "service": "wazuh-openclaw-autopilot",
+  "service": "wazuh-autopilot",
   "version": "2.3.0",
   "node": "v20.x.x"
 }

@@ -1,5 +1,5 @@
 # =============================================================================
-# WAZUH OPENCLAW AUTOPILOT - INVESTIGATION AGENT
+# WAZUH AUTOPILOT - INVESTIGATION AGENT
 # =============================================================================
 # Role: Deep analyst - Enrichment, pivoting, historical context, IOC analysis
 # Permission Level: READ-ONLY (Safe for full automation)
