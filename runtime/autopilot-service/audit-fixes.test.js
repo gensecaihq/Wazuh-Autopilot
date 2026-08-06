@@ -133,3 +133,37 @@ describe("/api/reports type whitelist (path-traversal guard)", () => {
     assert.ok(Array.isArray(res.body));
   });
 });
+
+describe("stripYamlComments — placeholder validation ignores comments (issue #33)", () => {
+  it("removes full-line and trailing comments", () => {
+    const yaml = [
+      "# To configure later, replace all <PLACEHOLDER> values with your Slack IDs",
+      "approvers:",
+      "  - U012ABCDEF  # was <SLACK_USER_ID>",
+      "workspace: T012WORKSPACE",
+    ].join("\n");
+    const stripped = idx.stripYamlComments(yaml);
+    assert.equal(stripped.match(/<[A-Z][A-Z_]+>/g), null, "placeholders in comments must not survive stripping");
+    assert.ok(stripped.includes("U012ABCDEF"), "config values must survive");
+    assert.ok(stripped.includes("workspace: T012WORKSPACE"));
+  });
+
+  it("keeps placeholders that are actual config values", () => {
+    const yaml = [
+      "# comment with <PLACEHOLDER>",
+      "workspace: <SLACK_WORKSPACE_ID>",
+    ].join("\n");
+    const matches = idx.stripYamlComments(yaml).match(/<[A-Z][A-Z_]+>/g);
+    assert.deepEqual(matches, ["<SLACK_WORKSPACE_ID>"], "real placeholder values must still be detected");
+  });
+
+  it("shipped policy.yaml: comment guidance is excluded, value placeholders remain", () => {
+    const fsSync = require("fs");
+    const content = fsSync.readFileSync(path.join(REPO_ROOT, "policies", "policy.yaml"), "utf8");
+    assert.ok(content.includes("<PLACEHOLDER>"), "sanity: raw file carries <PLACEHOLDER> guidance in a comment");
+    const stripped = idx.stripYamlComments(content);
+    assert.ok(!stripped.includes("<PLACEHOLDER>"), "comment guidance token must not survive stripping");
+    // The intentional dev-default placeholder VALUES must still be detected
+    assert.ok(stripped.includes("<SLACK_WORKSPACE_ID>"), "placeholder config values must survive stripping");
+  });
+});

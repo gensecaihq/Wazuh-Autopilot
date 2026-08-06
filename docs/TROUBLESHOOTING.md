@@ -150,6 +150,23 @@ Bootstrap mode warns about placeholders but doesn't block startup. All core func
 
 **If you are using Slack**, replace all `<PLACEHOLDER>` values in `policies/policy.yaml` with your actual Slack workspace, channel, and user IDs before running in production mode. See the comments in `policy.yaml` for instructions on finding these IDs.
 
+**Note (issue #33):** the validator now ignores YAML comments — guidance text like `# replace all <PLACEHOLDER> values` no longer trips the check. Only placeholders in *effective* config values count. If you're on an older build and a placeholder "exists only in a comment," either upgrade or delete the comment.
+
+### Slack mention reaches the agent, model returns HTTP 200, but no reply is posted
+
+Symptom: the gateway logs `Inbound app mention`, the provider call succeeds (`[model-fetch] response ... status=200`), then nothing — no Slack reply, no error (issue #33).
+
+Work through these in order:
+
+1. **OpenClaw version** — the minimum supported version is **v2026.7.3** (see README prerequisites). Older gateways (e.g., 2026.6.x) predate several reply-dispatch fixes; upgrade first, then `openclaw doctor --fix`.
+2. **Model catalog not scanned (OpenRouter/custom providers)** — if you never ran `openclaw models scan`, the capability catalog lacks `toolUse: true`, the model's output degrades to tool-call text with `stopReason: "stop"`, and the session ends without a deliverable reply. This produces *exactly* "200 then silence." See [Tool calls not working (OpenRouter)](#tool-calls-not-working--agents-output-web_fetch-as-text-openrouter). Run:
+   ```bash
+   openclaw models scan && openclaw gateway restart
+   ```
+3. **Slack app scopes / membership** — the bot needs `chat:write` (plus `app_mentions:read`, `channels:history`) and must be invited to the channel. A missing `chat:write` fails on the outbound leg only, after the model call. Check `openclaw gateway logs` for a Slack API error immediately after the model response.
+4. **Allowlist policies** — `openclaw.json` ships `dmPolicy: "allowlist"` / `groupPolicy: "allowlist"`. Confirm the sending user/channel is actually allowlisted; partial matches can process the mention but suppress delivery on some versions.
+5. **Session log** — inspect the session transcript for the mention: if it ends with assistant text but no channel post, it's the delivery leg (items 1/3); if it ends with `stopReason: "stop"` and tool-call JSON as plain text, it's item 2.
+
 ## OpenClaw Webhook Issues
 
 ### 400 "hook mapping requires message"

@@ -2416,6 +2416,21 @@ function stripYamlScalar(raw) {
   return s.trim();
 }
 
+// Remove YAML comments from a document: full-line comments and unquoted
+// trailing "# ..." segments. Quote-awareness is intentionally minimal (policy
+// values never contain "#"); used so validation scans only effective config.
+function stripYamlComments(content) {
+  return String(content)
+    .split("\n")
+    .map((line) => {
+      const trimmed = line.trimStart();
+      if (trimmed.startsWith("#")) return "";
+      const ci = line.search(/\s#/);
+      return ci >= 0 ? line.slice(0, ci) : line;
+    })
+    .join("\n");
+}
+
 function parseSimpleYaml(content) {
   const result = Object.create(null);
   const lines = content.split("\n");
@@ -6127,8 +6142,10 @@ async function validateStartup() {
   try {
     const policyContent = await fs.readFile(policyPath, "utf8");
 
-    // Check for angle-bracket placeholders (e.g., <SLACK_WORKSPACE_ID>, <SLACK_CHANNEL_ALERTS>)
-    const placeholderMatches = policyContent.match(/<[A-Z][A-Z_]+>/g);
+    // Check for angle-bracket placeholders (e.g., <SLACK_WORKSPACE_ID>, <SLACK_CHANNEL_ALERTS>).
+    // Comments are stripped first — guidance text like "# replace all <PLACEHOLDER>
+    // values" must not trip the check or block production startup (issue #33).
+    const placeholderMatches = stripYamlComments(policyContent).match(/<[A-Z][A-Z_]+>/g);
     if (placeholderMatches && placeholderMatches.length > 0) {
       log("warn", "startup", "Policy contains placeholder values - configure before production use", {
         placeholders_found: placeholderMatches.length,
@@ -6329,6 +6346,7 @@ module.exports = {
   mcpCircuitBreakerCheck,
   mcpCircuitBreakerRecord,
   parseDurationToSeconds,
+  stripYamlComments,
   // Gateway dispatch
   dispatchToGateway,
   queueFailedDispatch,
