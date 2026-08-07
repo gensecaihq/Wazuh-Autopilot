@@ -559,6 +559,18 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 
 ---
 
+## Acknowledgments
+
+Huge thanks to [**@idrone3d**](https://github.com/idrone3d) for exceptionally thorough field testing of Wazuh Autopilot on real, self-hosted local hardware, and for the detailed findings and suggestions in [issue #33](https://github.com/gensecaihq/Wazuh-Autopilot/issues/33). That work directly drove several improvements, including:
+
+- **Heartbeat operational cost** — surfacing that timer-based heartbeats dominate idle inference on small local models and paid APIs, which led to relaxed defaults and the new [event-driven tuning guide](docs/HEARTBEATS_AND_COST.md).
+- **New alerts grouped into terminal cases** — a correctness bug where a fresh alert could be merged into an already-closed/executed case.
+- **Plan-expiry persistence** — expired plans that reverted to actionable after a restart.
+
+Community testing like this makes the project meaningfully better. Thank you. 🙏
+
+---
+
 ## Community
 
 - [GitHub Discussions](https://github.com/gensecaihq/Wazuh-Autopilot/discussions) — Questions, ideas, deployment help
