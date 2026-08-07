@@ -49,6 +49,8 @@ const {
   findRelatedCase,
   indexCaseEntities,
   markEntityFalsePositive,
+  markEntityCaseTerminal,
+  TERMINAL_CASE_STATUSES,
   entityCaseIndex,
   MAX_ENTITY_INDEX_SIZE,
   responsePlans,
@@ -58,6 +60,7 @@ const {
   normalizeGatewayUrl,
   loadPlansFromDisk,
   savePlanToDisk,
+  expireStalePlans,
 } = require("./index.js");
 
 describe("Evidence Pack Management", () => {
@@ -815,6 +818,43 @@ describe("Crash Recovery — EXECUTING plans on startup", () => {
     assert.strictEqual(loaded.updated_at, "2026-01-01T00:00:00.000Z", "updated_at should be unchanged");
     assert.strictEqual(loaded.execution_result, undefined, "Should not have execution_result added");
   });
+
+  it("expireStalePlans persists the EXPIRED state so it survives a reload (Issue #33)", async () => {
+    // A proposed plan already past its expiry, persisted to disk as PROPOSED
+    const stalePlan = {
+      plan_id: "plan-expiry-persist-test",
+      case_id: "CASE-EXPIRY-001",
+      state: "proposed",
+      actions: [{ type: "block_ip", target: "10.0.0.9" }],
+      created_at: "2026-01-01T00:00:00.000Z",
+      updated_at: "2026-01-01T00:00:00.000Z",
+      expires_at: "2026-01-01T01:00:00.000Z", // long in the past
+    };
+    await fs.writeFile(
+      path.join(process.env.AUTOPILOT_DATA_DIR, "plans", `${stalePlan.plan_id}.json`),
+      JSON.stringify(stalePlan, null, 2),
+    );
+    await loadPlansFromDisk();
+
+    // Run the background sweep's expiry pass
+    const count = await expireStalePlans();
+    assert.ok(count >= 1, "at least one plan should expire");
+
+    // In memory it is EXPIRED
+    assert.strictEqual(getPlan(stalePlan.plan_id, { updateExpiry: false }).state, PLAN_STATES.EXPIRED);
+
+    // And crucially, disk reflects EXPIRED (the bug: it stayed PROPOSED on disk)
+    const diskContent = await fs.readFile(
+      path.join(process.env.AUTOPILOT_DATA_DIR, "plans", `${stalePlan.plan_id}.json`),
+      "utf8",
+    );
+    assert.strictEqual(JSON.parse(diskContent).state, "expired", "expiry must be persisted to disk");
+
+    // Simulate a restart: reload from disk — plan must NOT revert to actionable
+    await loadPlansFromDisk();
+    assert.strictEqual(getPlan(stalePlan.plan_id, { updateExpiry: false }).state, PLAN_STATES.EXPIRED,
+      "after restart the plan must remain EXPIRED, not revert to PROPOSED");
+  });
 });
 
 describe("Authorization Validation", () => {
@@ -1498,6 +1538,44 @@ describe("Alert Grouping", () => {
 
     const result = findRelatedCase(entities);
     assert.strictEqual(result, null);
+  });
+
+  it("findRelatedCase skips terminal cases (Issue #33)", () => {
+    const entities = [{ type: "ip", value: "100.100.100.55" }];
+    indexCaseEntities("CASE-TERM-001", entities, "high");
+    // Before terminal marking, it groups
+    assert.strictEqual(findRelatedCase(entities), "CASE-TERM-001");
+    // After the case reaches a terminal status, a new matching alert must NOT group
+    markEntityCaseTerminal("CASE-TERM-001");
+    assert.strictEqual(findRelatedCase(entities), null);
+  });
+
+  it("updateCase to a terminal status excludes the case from future grouping (Issue #33)", async () => {
+    const caseId = "CASE-TEST-GROUPTERM-01";
+    const entities = [{ type: "ip", value: "100.100.100.66" }];
+    await createCase(caseId, {
+      title: "grouping terminal test",
+      severity: "high",
+      entities,
+    });
+    indexCaseEntities(caseId, entities, "high");
+    assert.strictEqual(findRelatedCase(entities), caseId);
+
+    // Drive it to a terminal status through the real transition path
+    await updateCase(caseId, { status: "triaged" });
+    await updateCase(caseId, { status: "closed" });
+
+    // A fresh alert reusing the same IP must start a new case, not reopen the closed one
+    assert.strictEqual(findRelatedCase(entities), null);
+  });
+
+  it("TERMINAL_CASE_STATUSES covers closed/executed/rejected/false_positive", () => {
+    for (const s of ["closed", "executed", "rejected", "false_positive"]) {
+      assert.ok(TERMINAL_CASE_STATUSES.has(s), `${s} must be terminal`);
+    }
+    for (const s of ["open", "triaged", "correlated", "investigated", "planned", "approved"]) {
+      assert.ok(!TERMINAL_CASE_STATUSES.has(s), `${s} must NOT be terminal`);
+    }
   });
 
   it("findRelatedCase picks case with most matches", () => {

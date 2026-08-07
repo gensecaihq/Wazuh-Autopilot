@@ -228,7 +228,7 @@
           "alsoAllow": ["read", "edit", "web_fetch", "sessions_list", "sessions_history"],
           "deny": ["write", "exec", "delete", "browser"]
         },
-        "heartbeat": { "every": "10m" }
+        "heartbeat": { "every": "30m" }  // issue #33: was 10m; "0m" = event-driven (docs/HEARTBEATS_AND_COST.md)
       },
 
       // =====================================================================
@@ -243,7 +243,7 @@
           "alsoAllow": ["read", "edit", "web_fetch", "sessions_list", "sessions_history"],
           "deny": ["write", "exec", "delete", "browser"]
         },
-        "heartbeat": { "every": "5m" }
+        "heartbeat": { "every": "30m" }  // issue #33: was 5m; "0m" = event-driven (docs/HEARTBEATS_AND_COST.md)
       },
 
       // =====================================================================

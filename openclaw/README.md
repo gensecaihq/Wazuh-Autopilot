@@ -232,8 +232,8 @@ Periodic tasks are handled by agent **heartbeats** (configured per-agent in `ope
 
 | Agent | Heartbeat | Task |
 |-------|-----------|------|
-| wazuh-triage | Every 10 min | Sweep untriaged alerts |
-| wazuh-correlation | Every 5 min | Recorrelate active cases |
+| wazuh-triage | Every 30 min (`0m` to disable) | Sweep untriaged alerts |
+| wazuh-correlation | Every 30 min (`0m` to disable) | Recorrelate active cases |
 | All agents | Every 30 min (default) | Health check and maintenance |
 
 Additional cron jobs (reports, digests) can be added via the CLI:

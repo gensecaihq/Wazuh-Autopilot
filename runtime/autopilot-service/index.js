@@ -936,10 +936,14 @@ function indexCaseEntities(caseId, entities, severity) {
     const entries = entityCaseIndex.get(key);
     // Don't add duplicate case entries
     if (!entries.some((e) => e.caseId === caseId)) {
-      entries.push({ caseId, severity, createdAt: now, isFalsePositive: false });
+      entries.push({ caseId, severity, createdAt: now, isFalsePositive: false, terminal: false });
     }
   }
 }
+
+// Case statuses from which no further pipeline progress is expected. A new alert
+// must never be grouped into a case in one of these states (Issue #33).
+const TERMINAL_CASE_STATUSES = new Set(["closed", "executed", "rejected", "false_positive"]);
 
 function findRelatedCase(entities) {
   if (!config.alertGroupEnabled || entities.length === 0) return null;
@@ -955,6 +959,7 @@ function findRelatedCase(entities) {
 
     for (const entry of entries) {
       if (entry.isFalsePositive) continue;
+      if (entry.terminal) continue; // Issue #33: never group into a terminal case
       if (entry.createdAt < windowStart) continue;
 
       if (!caseScores.has(entry.caseId)) {
@@ -990,6 +995,18 @@ function markEntityFalsePositive(caseId) {
     for (const entry of entries) {
       if (entry.caseId === caseId) {
         entry.isFalsePositive = true;
+      }
+    }
+  }
+}
+
+// Issue #33: mark all entity-index entries for a case as terminal so
+// findRelatedCase() will never group a new alert into it.
+function markEntityCaseTerminal(caseId) {
+  for (const [, entries] of entityCaseIndex) {
+    for (const entry of entries) {
+      if (entry.caseId === caseId) {
+        entry.terminal = true;
       }
     }
   }
@@ -1194,6 +1211,12 @@ async function updateCase(caseId, updates) {
       });
       evidencePack.status = updates.status;
       stalledRedispatchCounts.delete(caseId); // Reset backoff counter on status transition
+      // Issue #33: once a case reaches a terminal status, exclude it from
+      // entity-based alert grouping so a new alert reusing the same IP/host/user
+      // can never be merged into (and thereby "reopen") a resolved case.
+      if (TERMINAL_CASE_STATUSES.has(updates.status)) {
+        markEntityCaseTerminal(caseId);
+      }
     }
 
     // Append arrays with size cap to prevent unbounded growth
@@ -1881,6 +1904,31 @@ function getPlan(planId, { updateExpiry = true } = {}) {
   }
 
   return plan;
+}
+
+// Expire stale PROPOSED/APPROVED plans past their expires_at and PERSIST the
+// change (Issue #33). Returns the number expired. Extracted from the periodic
+// cleanup interval so it is unit-testable and so the disk write can be awaited.
+async function expireStalePlans() {
+  const nowTs = Date.now();
+  const nowIso = new Date(nowTs).toISOString();
+  let expired = 0;
+  for (const [, plan] of responsePlans.entries()) {
+    if (
+      (plan.state === PLAN_STATES.PROPOSED || plan.state === PLAN_STATES.APPROVED) &&
+      new Date(plan.expires_at).getTime() < nowTs
+    ) {
+      plan.state = PLAN_STATES.EXPIRED;
+      plan.updated_at = nowIso;
+      await savePlanToDisk(plan); // persist so a restart doesn't revert to actionable
+      expired++;
+      incrementMetric("plans_expired_total");
+    }
+  }
+  if (expired > 0) {
+    log("info", "cleanup", "Plans expired", { count: expired });
+  }
+  return expired;
 }
 
 // Issue #11 fix: Add offset pagination
@@ -4590,6 +4638,23 @@ function createServer() {
         let groupedCaseId = null;
         if (entities.length > 0) {
           groupedCaseId = findRelatedCase(entities);
+          // Defense-in-depth (Issue #33): never group into a terminal case, even
+          // if a stale index entry slipped through or the case turned terminal
+          // concurrently with this ingest. Only costs a read when a candidate exists.
+          if (groupedCaseId) {
+            try {
+              const candidate = await getCase(groupedCaseId);
+              if (TERMINAL_CASE_STATUSES.has(candidate.status)) {
+                log("info", "alert-group", "Skipped grouping into terminal case; creating new case", {
+                  candidate_case_id: groupedCaseId,
+                  candidate_status: candidate.status,
+                });
+                groupedCaseId = null;
+              }
+            } catch {
+              groupedCaseId = null; // candidate unreadable — fall back to a fresh case
+            }
+          }
         }
 
         const effectiveCaseId = groupedCaseId || caseId;
@@ -6361,6 +6426,8 @@ module.exports = {
   findRelatedCase,
   indexCaseEntities,
   markEntityFalsePositive,
+  markEntityCaseTerminal,
+  TERMINAL_CASE_STATUSES,
   entityCaseIndex,
   MAX_ENTITY_INDEX_SIZE,
   get entityIndexWarningLogged() { return entityIndexWarningLogged; },
@@ -6407,6 +6474,7 @@ module.exports = {
   // Plan persistence
   savePlanToDisk,
   loadPlansFromDisk,
+  expireStalePlans,
   // Stalled pipeline
   checkStalledPipeline,
   // Utilities
@@ -6599,24 +6667,11 @@ function setupCleanupIntervals() {
   cleanupIntervals.push(rateLimitCleanup);
 
   // Response plans cleanup (expire old proposed/approved plans)
-  const plansCleanup = setInterval(() => {
+  const plansCleanup = setInterval(async () => {
     const nowTs = Date.now();
-    const nowIso = new Date(nowTs).toISOString();
-    let expired = 0;
-    for (const [, plan] of responsePlans.entries()) {
-      if (
-        (plan.state === PLAN_STATES.PROPOSED || plan.state === PLAN_STATES.APPROVED) &&
-        new Date(plan.expires_at).getTime() < nowTs // Issue #13 fix
-      ) {
-        plan.state = PLAN_STATES.EXPIRED;
-        plan.updated_at = nowIso;
-        expired++;
-        incrementMetric("plans_expired_total");
-      }
-    }
-    if (expired > 0) {
-      log("info", "cleanup", "Plans expired", { count: expired });
-    }
+    // Issue #33: expire stale plans AND persist the change (was memory-only,
+    // so a restart reverted expired plans to actionable).
+    await expireStalePlans();
 
     // Also clean up very old completed/failed plans (older than 7 days)
     const cutoff = nowTs - 7 * 24 * 60 * 60 * 1000;

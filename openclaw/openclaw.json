@@ -80,7 +80,16 @@
         }
       },
 
-      // Heartbeat: periodic health/sweep tasks using cheap model
+      // Heartbeat: periodic sweeps using a cheap model.
+      // COST NOTE (issue #33): heartbeats run inference on a timer even when there
+      // are NO alerts — the dominant idle cost on paid APIs and small local GPUs.
+      // OpenClaw rule: if ANY agent declares its own `heartbeat` block, ONLY those
+      // agents run heartbeats — this defaults block is just the merge template.
+      // Here only triage + correlation heartbeat (see below). The pipeline is
+      // event-driven (webhooks) and the runtime has a zero-inference stalled-
+      // pipeline detector, so heartbeats are a light safety net, not the engine.
+      // To go FULLY event-driven, set both per-agent heartbeats to "0m" (disables).
+      // See docs/HEARTBEATS_AND_COST.md.
       "heartbeat": {
         "every": "30m",
         "model": "anthropic/claude-haiku-4-5"
@@ -111,7 +120,9 @@
           "alsoAllow": ["read", "edit", "web_fetch", "sessions_list", "sessions_history"],
           "deny": ["write", "exec", "delete", "browser"]
         },
-        "heartbeat": { "every": "10m" }
+        // Untriaged-alert sweep. 30m balances cost vs. safety-net latency;
+        // set "0m" for fully event-driven (issue #33 / docs/HEARTBEATS_AND_COST.md).
+        "heartbeat": { "every": "30m" }
       },
 
       // =====================================================================
@@ -126,7 +137,9 @@
           "alsoAllow": ["read", "edit", "web_fetch", "sessions_list", "sessions_history"],
           "deny": ["write", "exec", "delete", "browser"]
         },
-        "heartbeat": { "every": "5m" }
+        // Recorrelation sweep. 30m (was 5m) cuts idle inference ~6x; set "0m"
+        // for fully event-driven (issue #33 / docs/HEARTBEATS_AND_COST.md).
+        "heartbeat": { "every": "30m" }
       },
 
       // =====================================================================
@@ -265,7 +278,8 @@
   // ---------------------------------------------------------------------------
   // CRON — Enable scheduled heartbeats and tasks
   // ---------------------------------------------------------------------------
-  // Agent heartbeats handle periodic sweeps (triage/10m, correlation/5m).
+  // Agent heartbeats handle periodic sweeps (triage + correlation, 30m each;
+  // set "0m" per-agent for fully event-driven — see docs/HEARTBEATS_AND_COST.md).
   // Additional cron jobs can be added via: openclaw cron add
   // ---------------------------------------------------------------------------
   "cron": {

@@ -136,8 +136,10 @@ Dispatches are fire-and-forget (async, 10s timeout, 1 retry).
 
 | Agent | Interval | Task |
 |-------|----------|------|
-| wazuh-triage | Every 10 min | Sweep untriaged alerts |
-| wazuh-correlation | Every 5 min | Recorrelate active cases |
+| wazuh-triage | Every 30 min (`0m` to disable) | Sweep untriaged alerts |
+| wazuh-correlation | Every 30 min (`0m` to disable) | Recorrelate active cases |
+
+> **Cost:** heartbeats run inference on a timer even at zero alerts. Only triage + correlation heartbeat (OpenClaw runs heartbeats only for agents that declare a `heartbeat` block). For small local models or paid APIs, consider fully event-driven mode (`0m`). See [HEARTBEATS_AND_COST.md](HEARTBEATS_AND_COST.md).
 | All agents | Every 30 min (default) | Health check and maintenance |
 
 **3. Cron jobs** (reports) can be added via CLI:
