@@ -77,6 +77,11 @@ feat: Add Teams integration support
 - Add documentation for Teams setup
 ```
 
+**No AI attribution.** Commit messages and PR descriptions must not contain AI/tool
+attribution — no `Co-Authored-By: Claude ...` trailers, no `Generated with Claude
+Code` footers, or similar. Author your work as yourself with a plain, descriptive
+message. This applies to commits made with the help of any AI coding assistant.
+
 ## Development Setup
 
 ### Prerequisites
