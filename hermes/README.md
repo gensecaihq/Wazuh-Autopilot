@@ -2,13 +2,13 @@
 
 This directory contains the [Nous Research Hermes Agent](https://github.com/NousResearch/hermes-agent) profile for Wazuh Autopilot — an alternative agent runtime to the default OpenClaw gateway. Full step-by-step deployment guide: [docs/HERMES_DEPLOYMENT.md](../docs/HERMES_DEPLOYMENT.md).
 
-Hermes is a self-improving agent with an autonomous learning loop: it creates skills from experience, keeps persistent memory across sessions, and exposes both a CLI/TUI and a messaging gateway (Telegram, Discord, Slack, WhatsApp, Signal, Email). Where the OpenClaw profile runs seven pipeline agents behind a webhook gateway, the Hermes profile runs a **single SOC analyst agent** that works cases interactively (or via its messaging gateway) using the same Wazuh MCP server and Runtime API.
+Hermes is a self-improving agent with an autonomous learning loop: it creates skills from experience, keeps persistent memory across sessions, and exposes both a CLI/TUI and a messaging gateway (Telegram, Discord, Slack, WhatsApp, Signal, Email). Where the OpenClaw profile runs eleven agents (a seven-stage pipeline plus four specialists) behind a webhook gateway, the Hermes profile runs a **single SOC analyst agent** that works cases interactively (or via its messaging gateway) using the same Wazuh MCP server and Runtime API.
 
 ## When to Use Which Runtime
 
 | | OpenClaw (default) | Hermes Agent | NemoClaw |
 |---|---|---|---|
-| Model | 7 pipeline agents, webhook-driven | 1 analyst agent + subagents, session-driven | OpenClaw or Hermes inside NVIDIA OpenShell sandbox |
+| Model | 11 agents (7-stage pipeline + 4 specialists), webhook-driven | 1 analyst agent + subagents, session-driven | OpenClaw or Hermes inside NVIDIA OpenShell sandbox |
 | Best for | Fully automated 24/7 pipeline | Analyst-assist, on-demand investigation, chat-ops | Governed/enterprise deployments on NVIDIA hardware |
 | Learning | `MEMORY.md` per agent | Native skills + persistent memory | Inherits from wrapped agent |
 | Approvals | Two-tier via Runtime API | Two-tier via Runtime API (same endpoints) | Two-tier via Runtime API + OpenShell policies |

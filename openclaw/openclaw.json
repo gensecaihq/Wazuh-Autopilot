@@ -220,6 +220,69 @@
           "alsoAllow": ["read", "write", "web_fetch", "sessions_list", "sessions_history"],
           "deny": ["exec", "delete", "browser"]
         }
+      },
+
+      // =====================================================================
+      // VULNERABILITY MANAGEMENT — Risk-based CVE prioritization (PB-005)
+      // =====================================================================
+      {
+        "id": "wazuh-vuln-management",
+        "workspace": "~/.openclaw/wazuh-autopilot/agents/vuln-management",
+        "agentDir": "~/.openclaw/wazuh-autopilot/agents/vuln-management",
+        "model": "anthropic/claude-haiku-4-5",
+        "tools": {
+          "profile": "minimal",
+          "alsoAllow": ["read", "edit", "web_fetch", "sessions_list", "sessions_history"],
+          "deny": ["write", "exec", "delete", "browser"]
+        },
+        // Low-frequency sweep — vuln data changes slowly; "0m" disables (docs/HEARTBEATS_AND_COST.md)
+        "heartbeat": { "every": "12h" }
+      },
+
+      // =====================================================================
+      // THREAT INTELLIGENCE — IOC enrichment & attribution (reactive service)
+      // =====================================================================
+      {
+        "id": "wazuh-threat-intel",
+        "workspace": "~/.openclaw/wazuh-autopilot/agents/threat-intel",
+        "agentDir": "~/.openclaw/wazuh-autopilot/agents/threat-intel",
+        "tools": {
+          "profile": "minimal",
+          "alsoAllow": ["read", "edit", "web_fetch", "sessions_list", "sessions_history"],
+          "deny": ["write", "exec", "delete", "browser"]
+        }
+        // No heartbeat — reactive enrichment via the ioc-enrichment webhook.
+      },
+
+      // =====================================================================
+      // THREAT HUNTER — Proactive hypothesis-driven hunts
+      // =====================================================================
+      {
+        "id": "wazuh-threat-hunter",
+        "workspace": "~/.openclaw/wazuh-autopilot/agents/threat-hunter",
+        "agentDir": "~/.openclaw/wazuh-autopilot/agents/threat-hunter",
+        "tools": {
+          "profile": "minimal",
+          "alsoAllow": ["read", "edit", "web_fetch", "sessions_list", "sessions_history"],
+          "deny": ["write", "exec", "delete", "browser"]
+        },
+        // Low-frequency proactive hunts — broaden depth, not frequency; "0m" disables (docs/HEARTBEATS_AND_COST.md)
+        "heartbeat": { "every": "6h" }
+      },
+
+      // =====================================================================
+      // DETECTION ENGINEER — Detection-as-code proposals (human-reviewed)
+      // =====================================================================
+      {
+        "id": "wazuh-detection-engineer",
+        "workspace": "~/.openclaw/wazuh-autopilot/agents/detection-engineer",
+        "agentDir": "~/.openclaw/wazuh-autopilot/agents/detection-engineer",
+        "tools": {
+          "profile": "minimal",
+          "alsoAllow": ["read", "edit", "web_fetch", "sessions_list", "sessions_history"],
+          "deny": ["write", "exec", "delete", "browser"]
+        }
+        // No heartbeat — triggered by detection-review after the reporting cycle.
       }
     ]
   },
@@ -347,6 +410,38 @@
         "agentId": "wazuh-responder",
         "messageTemplate": "{{message}}",
         "name": "Wazuh Action Execution",
+        "allowUnsafeExternalContent": true
+      },
+      {
+        "match": { "path": "vuln-spike" },
+        "action": "agent",
+        "agentId": "wazuh-vuln-management",
+        "messageTemplate": "{{message}}",
+        "name": "Wazuh Vulnerability Spike",
+        "allowUnsafeExternalContent": true
+      },
+      {
+        "match": { "path": "ioc-enrichment" },
+        "action": "agent",
+        "agentId": "wazuh-threat-intel",
+        "messageTemplate": "{{message}}",
+        "name": "Wazuh IOC Enrichment",
+        "allowUnsafeExternalContent": true
+      },
+      {
+        "match": { "path": "hunt-request" },
+        "action": "agent",
+        "agentId": "wazuh-threat-hunter",
+        "messageTemplate": "{{message}}",
+        "name": "Wazuh Threat Hunt",
+        "allowUnsafeExternalContent": true
+      },
+      {
+        "match": { "path": "detection-review" },
+        "action": "agent",
+        "agentId": "wazuh-detection-engineer",
+        "messageTemplate": "{{message}}",
+        "name": "Wazuh Detection Review",
         "allowUnsafeExternalContent": true
       }
     ]

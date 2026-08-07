@@ -356,7 +356,7 @@ describe("install.sh config template uses alsoAllow", () => {
 
 describe("Agent AGENTS.md files reference web_fetch correctly", () => {
   const agentsDir = path.join(ROOT, "openclaw", "agents");
-  const agentNames = ["triage", "correlation", "investigation", "response-planner", "policy-guard", "responder"];
+  const agentNames = ["triage", "correlation", "investigation", "response-planner", "policy-guard", "responder", "vuln-management", "threat-intel", "threat-hunter", "detection-engineer"];
 
   for (const name of agentNames) {
     it(`${name}/AGENTS.md contains web_fetch invocation syntax`, () => {

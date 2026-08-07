@@ -13,7 +13,7 @@ This directory contains the [NVIDIA NemoClaw](https://github.com/NVIDIA/NemoClaw
 
 ## Why NemoClaw for a SOC
 
-If OpenClaw is the kernel, NemoClaw is the enterprise distribution. On top of the same seven Autopilot agents it adds:
+If OpenClaw is the kernel, NemoClaw is the enterprise distribution. On top of the same eleven Autopilot agents (seven-stage pipeline + four specialists) it adds:
 
 | OpenShell feature | SOC benefit |
 |---|---|

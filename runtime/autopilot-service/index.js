@@ -1704,7 +1704,11 @@ const ALLOWED_ACTION_TYPES = new Set([
 // Report types accepted by store-report / listed by /api/reports. Used as a
 // filesystem path segment, so it doubles as a path-traversal whitelist.
 // Issue #30: executive (C-Level) and incident are first-class types.
-const VALID_REPORT_TYPES = ["hourly", "daily", "weekly", "monthly", "shift", "executive", "incident"];
+// Report types accepted by store-report and listed by /api/reports.
+// Operational: hourly/daily/weekly/monthly/shift; leadership: executive/incident.
+// Specialist agents: vulnerability (vuln-management), threat_intel (threat-intel),
+// hunt (threat-hunter), detection (detection-engineer).
+const VALID_REPORT_TYPES = ["hourly", "daily", "weekly", "monthly", "shift", "executive", "incident", "vulnerability", "threat_intel", "hunt", "detection"];
 
 // Issue #6 fix: Validate action structure
 function validatePlanAction(action, index) {

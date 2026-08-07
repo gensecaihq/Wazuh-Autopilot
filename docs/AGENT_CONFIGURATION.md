@@ -4,7 +4,7 @@ This document describes how to configure and customize the OpenClaw agents for W
 
 ## Overview
 
-Wazuh Autopilot includes 7 specialized agents, each handling a specific aspect of the SOC workflow:
+Wazuh Autopilot includes 11 specialized agents — a seven-stage reactive incident pipeline plus four proactive/specialist functions (vulnerability management, threat intelligence, threat hunting, detection engineering):
 
 | Agent | Role | Autonomy Level |
 |-------|------|----------------|
@@ -15,6 +15,12 @@ Wazuh Autopilot includes 7 specialized agents, each handling a specific aspect o
 | Policy Guard | Constitutional enforcement | Approval-gated |
 | Responder | Action execution | Approval-gated (Disabled by default) |
 | Reporting | Summary generation, metrics | Read-only (Full auto) |
+| Vulnerability Management | Risk-based CVE prioritization (KEV/EPSS/CVSS/SSVC), spike response | Read-only (Full auto) |
+| Threat Intelligence | IOC enrichment, graded confidence, ATT&CK attribution | Read-only (Full auto) |
+| Threat Hunter | Proactive hypothesis-driven hunts, ATT&CK coverage | Read-only (Full auto) |
+| Detection Engineer | Detection-gap→rule proposals, FP tuning (detection-as-code) | Read-only, proposals human-reviewed |
+
+The first seven form the reactive incident pipeline; the last four are the proactive/specialist functions.
 
 ---
 
@@ -37,7 +43,11 @@ Each agent has a workspace directory containing OpenClaw standard files:
 ├── response-planner/   # Same structure (no HEARTBEAT.md)
 ├── policy-guard/       # Same structure (no HEARTBEAT.md)
 ├── responder/          # Same structure (no HEARTBEAT.md)
-└── reporting/          # Same structure (+ HEARTBEAT.md)
+├── reporting/          # Same structure (+ HEARTBEAT.md)
+├── vuln-management/    # Specialist (+ HEARTBEAT.md, 12h sweep)
+├── threat-intel/       # Specialist (no HEARTBEAT.md — reactive enrichment)
+├── threat-hunter/      # Specialist (+ HEARTBEAT.md, 6h hunts)
+└── detection-engineer/ # Specialist (no HEARTBEAT.md — reactive to reporting)
 ```
 
 ### File Roles
@@ -129,6 +139,10 @@ The Runtime Service dispatches webhooks to the OpenClaw Gateway when case status
 | Case status → `correlated` | `/webhook/investigation-request` | Investigation |
 | Case status → `investigated` | `/webhook/plan-request` | Response Planner |
 | Plan created | `/webhook/policy-check` | Policy Guard |
+| Vulnerability spike | `/webhook/vuln-spike` | Vulnerability Management |
+| IOC enrichment request | `/webhook/ioc-enrichment` | Threat Intelligence |
+| Hunt request | `/webhook/hunt-request` | Threat Hunter |
+| Detection review (post-reporting) | `/webhook/detection-review` | Detection Engineer |
 
 Dispatches are fire-and-forget (async, 10s timeout, 1 retry).
 
@@ -138,9 +152,10 @@ Dispatches are fire-and-forget (async, 10s timeout, 1 retry).
 |-------|----------|------|
 | wazuh-triage | Every 30 min (`0m` to disable) | Sweep untriaged alerts |
 | wazuh-correlation | Every 30 min (`0m` to disable) | Recorrelate active cases |
+| wazuh-threat-hunter | Every 6 h (`0m` to disable) | Proactive hypothesis-driven hunt |
+| wazuh-vuln-management | Every 12 h (`0m` to disable) | Vulnerability posture sweep |
 
-> **Cost:** heartbeats run inference on a timer even at zero alerts. Only triage + correlation heartbeat (OpenClaw runs heartbeats only for agents that declare a `heartbeat` block). For small local models or paid APIs, consider fully event-driven mode (`0m`). See [HEARTBEATS_AND_COST.md](HEARTBEATS_AND_COST.md).
-| All agents | Every 30 min (default) | Health check and maintenance |
+> **Cost:** heartbeats run inference on a timer even at zero alerts. Only agents that declare a `heartbeat` block run heartbeats — here triage + correlation (30 min) and the two low-frequency specialists (threat-hunter 6 h, vuln-management 12 h). Everything else is purely event-driven. For small local models or paid APIs, set any of these to `0m`. See [HEARTBEATS_AND_COST.md](HEARTBEATS_AND_COST.md).
 
 **3. Cron jobs** (reports) can be added via CLI:
 

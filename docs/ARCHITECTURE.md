@@ -8,7 +8,7 @@ How Wazuh Autopilot turns a raw Wazuh alert into a governed, human-approved resp
    ┌────────────┐      alert webhook       ┌──────────────────────────────┐
    │   Wazuh    │ ───────────────────────▶ │   Agent Runtime (one of 3)   │
    │  Manager   │                          │  OpenClaw / Hermes / NemoClaw │
-   │ + Indexer  │ ◀─── queries (MCP) ─────  │  → 7 SOC agents               │
+   │ + Indexer  │ ◀─── queries (MCP) ─────  │  → 11 SOC agents              │
    └────────────┘                          └───────────────┬──────────────┘
         ▲                                                   │ REST (cases, plans)
         │ active response (MCP)                             ▼
@@ -31,11 +31,13 @@ Three planes:
 
 - **Control plane** — the **Runtime Service** (`runtime/autopilot-service/index.js`). Owns case state, response plans, the policy engine, the two-tier approval workflow, KPIs, and evidence packs. This is the source of truth; agents and humans both act through its REST API.
 - **Data plane** — the **Wazuh MCP Server** (48 tools). The only path agents use to read Wazuh (alerts, auth history, process trees, vulnerabilities) and to dispatch active response.
-- **Reasoning plane** — the **agent runtime** (OpenClaw, Hermes, or NemoClaw) hosting the seven SOC agents that do the analysis.
+- **Reasoning plane** — the **agent runtime** (OpenClaw, Hermes, or NemoClaw) hosting the eleven SOC agents (seven-stage reactive pipeline + four specialists) that do the analysis.
 
-## The SOC pipeline
+## The SOC team
 
-Seven agents, each a security-expert persona mirroring a human SOC role, connected as a pipeline with strict handoffs. Full personas live in [`openclaw/agents/*/IDENTITY.md`](../openclaw/agents) and the team roster in [`_shared/SOUL.md`](../openclaw/agents/_shared/SOUL.md).
+Eleven agents, each a security-expert persona mirroring a human SOC role. Seven form the **reactive incident pipeline** (alert → response) with strict handoffs; four are **proactive/specialist** functions that a mature SOC runs alongside it. Full personas live in [`openclaw/agents/*/IDENTITY.md`](../openclaw/agents) and the team roster in [`_shared/SOUL.md`](../openclaw/agents/_shared/SOUL.md).
+
+### Reactive incident pipeline
 
 | # | Agent | Human role | Permission | Reads | Writes |
 |---|---|---|---|---|---|
@@ -48,6 +50,17 @@ Seven agents, each a security-expert persona mirroring a human SOC role, connect
 | 7 | **Reporting** | SOC Manager / Metrics Analyst | read-only | metrics, cases | reports |
 
 Agents 1–3 and 7 are **fully automated but read-only** — they can never change a host. Agents 4–6 form the response path, and nothing in that path executes without two human approvals.
+
+### Proactive / specialist functions
+
+| # | Agent | Human role | Permission | Trigger | Output |
+|---|---|---|---|---|---|
+| 8 | **Vulnerability Management** | Vulnerability Management Analyst | read-only | vuln-spike webhook / scheduled | risk-based CVE priority (KEV/EPSS/CVSS/SSVC), posture report |
+| 9 | **Threat Intelligence** | CTI Analyst | read-only | ioc-enrichment webhook / scheduled | graded enrichment, ATT&CK attribution, IOC lifecycle |
+| 10 | **Threat Hunter** | Threat Hunter | read-only | scheduled hunts / hunt-request | hypothesis-driven findings, ATT&CK coverage, hunt→detection |
+| 11 | **Detection Engineer** | Detection Engineer | read-only | detection-review (post-reporting) | detection proposals (ADS/Sigma), FP tuning — human-reviewed |
+
+The specialists are read-only and produce **proposals and intelligence**, never live changes: vuln remediation and detection deployment are human-actioned; hunt findings escalate into the reactive pipeline. Threat Intelligence enriches cases in place; Vulnerability Management and Threat Hunter feed the pipeline and the Detection Engineer; the Detection Engineer closes the loop from Reporting's coverage gaps back into new detections.
 
 ### Case lifecycle
 
@@ -102,7 +115,7 @@ Because policy enforcement and approvals live in the **Runtime Service** (not th
 
 ## Scaling to a swarm
 
-The seven roles scale horizontally when alert volume demands it:
+The pipeline roles scale horizontally when alert volume demands it:
 
 - **OpenClaw** — raise `agents.defaults.maxConcurrent` and heartbeat frequency; each webhook/heartbeat run is an independent session.
 - **Hermes** — the analyst spawns isolated subagents for parallel workstreams (e.g. one pivot per host).
@@ -133,7 +146,7 @@ Whatever the fan-out, every response still funnels through the single Policy Gua
 |---|---|
 | `runtime/autopilot-service/index.js` | Runtime service — cases, plans, policy, approvals, KPIs, evidence (~6,950 LOC) |
 | `runtime/autopilot-service/slack.js` | Slack Socket Mode integration |
-| `runtime/autopilot-service/*.test.js` | 582 tests across 16 files |
+| `runtime/autopilot-service/*.test.js` | 586 tests across 16 files |
 | `openclaw/` | OpenClaw gateway config + 7 agent instruction sets |
 | `hermes/`, `nemoclaw/` | Alternative runtime profiles |
 | `policies/policy.yaml` | Action allowlists, approvers, protected targets, thresholds |

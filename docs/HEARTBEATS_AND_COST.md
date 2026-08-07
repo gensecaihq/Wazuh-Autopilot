@@ -22,23 +22,24 @@ OpenClaw's rule (important, and easy to get wrong):
 
 > **If _any_ agent declares its own `heartbeat` block, only those agents run heartbeats.** The shared `agents.defaults.heartbeat` block then serves only as the merge template — it does **not** broadcast to every agent.
 
-In the shipped configs, only **triage** and **correlation** declare `heartbeat` blocks. So:
+In the shipped configs, four agents declare `heartbeat` blocks — the two pipeline sweeps and the two low-frequency specialists:
 
-- **Triage** and **correlation** heartbeat.
-- Investigation, response-planner, policy-guard, and responder **never** heartbeat — they are purely reactive to webhooks.
+- **Triage** (30 min) and **correlation** (30 min) — reactive-pipeline safety-net sweeps.
+- **Threat Hunter** (6 h) and **Vulnerability Management** (12 h) — proactive specialists that run on a slow cadence by design.
+- Investigation, response-planner, policy-guard, responder, threat-intel, and detection-engineer **never** heartbeat — they are purely reactive to webhooks.
 - Reporting is driven by **cron** (`openclaw cron add`), not a heartbeat.
 
 ## The idle-inference math
 
 Idle inference = heartbeat runs per hour when there are **zero** alerts.
 
-| Config | Triage | Correlation | Idle runs/hour | Idle runs/day |
-|---|---|---|---|---|
-| **Old defaults** (pre-fix) | every 10m (6/h) | every 5m (12/h) | **18** | 432 |
-| **Current defaults** (30m each) | every 30m (2/h) | every 30m (2/h) | **4** | 96 |
-| **Event-driven** (`0m` each) | disabled | disabled | **0** | 0 |
+| Config | Triage | Correlation | Hunter | Vuln | Idle runs/hour | Idle runs/day |
+|---|---|---|---|---|---|---|
+| **Old defaults** (pre-fix) | 10m (6/h) | 5m (12/h) | — | — | **18** | 432 |
+| **Current defaults** | 30m (2/h) | 30m (2/h) | 6h (~0.17/h) | 12h (~0.08/h) | **~4.25** | ~102 |
+| **Event-driven** (`0m` each) | disabled | disabled | disabled | disabled | **0** | 0 |
 
-The current defaults cut idle inference by ~78% versus the old ones, with no loss of recovery (see below). Event-driven removes it entirely.
+The two specialists run on a deliberately slow cadence (6 h / 12 h), so they add only ~0.25 runs/hour — negligible next to the pipeline sweeps. The current defaults cut idle inference by ~76% versus the old ones, with no loss of recovery (see below). Event-driven removes it entirely.
 
 > Earlier drafts of this analysis counted all seven agents (~28/h). That was wrong: because triage and correlation declare heartbeat blocks, the other five agents don't heartbeat at all. The real idle figure is the two-agent number above.
 

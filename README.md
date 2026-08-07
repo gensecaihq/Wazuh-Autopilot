@@ -5,7 +5,7 @@
 <h3>Your Wazuh SIEM, run by an autonomous AI SOC team — that triages, investigates, and responds in seconds, while humans stay in control.</h3>
 
 <p>
-  <strong>Seven security-expert AI agents work every alert like a real SOC shift — Tier 1 → Tier 2 → DFIR → IR Lead → Compliance → Containment → SOC Manager.</strong><br/>
+  <strong>A full AI SOC team — eleven security-expert agents: a seven-stage reactive pipeline (Tier 1 → Tier 2 → DFIR → IR Lead → Compliance → Containment → SOC Manager) plus four proactive specialists (Vulnerability Management, Threat Intel, Threat Hunting, Detection Engineering).</strong><br/>
   Every containment action is gated behind two-tier human approval. No alert goes unread. Every decision leaves an evidence trail.
 </p>
 
@@ -13,7 +13,7 @@
   <a href="https://github.com/gensecaihq/Wazuh-Autopilot/releases"><img src="https://img.shields.io/github/v/release/gensecaihq/Wazuh-Autopilot?color=2ea44f&label=release&style=flat-square" alt="Release"/></a>
   <a href="https://github.com/gensecaihq/Wazuh-Autopilot/blob/main/LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue.svg?style=flat-square" alt="License: MIT"/></a>
   <a href="https://github.com/gensecaihq/Wazuh-Autopilot/actions"><img src="https://img.shields.io/github/actions/workflow/status/gensecaihq/Wazuh-Autopilot/ci.yml?label=CI&style=flat-square" alt="CI"/></a>
-  <img src="https://img.shields.io/badge/tests-582%20passing-2ea44f?style=flat-square" alt="Tests"/>
+  <img src="https://img.shields.io/badge/tests-586%20passing-2ea44f?style=flat-square" alt="Tests"/>
   <a href="https://github.com/gensecaihq/Wazuh-Autopilot/issues"><img src="https://img.shields.io/github/issues/gensecaihq/Wazuh-Autopilot?style=flat-square" alt="Issues"/></a>
   <a href="https://github.com/gensecaihq/Wazuh-Autopilot/stargazers"><img src="https://img.shields.io/github/stars/gensecaihq/Wazuh-Autopilot?style=social" alt="Stars"/></a>
 </p>
@@ -52,11 +52,11 @@
 
 ## ⭐ Why Star This Project
 
-- **A real SOC team, not a chatbot** — seven agents with distinct security-expert personas and strict handoffs, mirroring a human 24/7 shift.
+- **A real SOC team, not a chatbot** — eleven agents with distinct security-expert personas: a seven-stage reactive pipeline plus proactive vulnerability management, threat intel, hunting, and detection engineering.
 - **Humans stay in control** — AI *proposes*, humans *approve* and *execute*. Two-tier approval with separation of duties, enforced in code.
 - **Runs anywhere** — cloud LLMs, self-hosted GPU (vLLM), fully air-gapped (Ollama), or the NVIDIA stack (NemoClaw + Nemotron) — same pipeline.
 - **Three agent runtimes** — [OpenClaw](openclaw/README.md) (default), [Hermes](docs/HERMES_DEPLOYMENT.md) (analyst chat-ops), [NemoClaw](docs/NEMOCLAW_DEPLOYMENT.md) (governed, NVIDIA-sandboxed).
-- **Production-grade** — 582 passing tests, structured evidence packs, Prometheus SOC KPIs, policy engine, crash recovery, security-audited.
+- **Production-grade** — 586 passing tests, structured evidence packs, Prometheus SOC KPIs, policy engine, crash recovery, security-audited.
 
 ---
 
@@ -115,7 +115,9 @@ No alert sits unread. No playbook gets skipped. Every action has an evidence tra
                                                       kill_process, disable_user...
 ```
 
-**7 specialized agents** work as a pipeline. Each agent has a single responsibility, its own playbook, and communicates through the runtime service via webhooks. The runtime enforces policy at every step — action allowlists, confidence thresholds, rate limits, time windows, and idempotency checks.
+The diagram above is the **seven-stage reactive pipeline**. Each agent has a single responsibility, its own playbook, and communicates through the runtime service via webhooks. The runtime enforces policy at every step — action allowlists, confidence thresholds, rate limits, time windows, and idempotency checks.
+
+Alongside it run **four proactive specialists** — **Vulnerability Management** (risk-based CVE prioritization via KEV/EPSS/CVSS/SSVC), **Threat Intelligence** (IOC enrichment + ATT&CK attribution), **Threat Hunter** (proactive hypothesis-driven hunts), and **Detection Engineer** (turns coverage gaps and hunt findings into detection proposals). Eleven agents total; see [ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
 **AI agents never act autonomously.** Every response action requires explicit two-tier human approval (Approve + Execute). The responder capability is disabled by default.
 
@@ -224,7 +226,7 @@ The Autopilot pipeline runs on your choice of agent runtime:
 
 | Runtime | Shape | Inference | Guide |
 |---|---|---|---|
-| **[OpenClaw](openclaw/README.md)** (default) | 7 pipeline agents, webhook-driven, 24/7 | Any provider | [openclaw/](openclaw/README.md) |
+| **[OpenClaw](openclaw/README.md)** (default) | 11 agents (7-stage pipeline + 4 specialists), webhook-driven, 24/7 | Any provider | [openclaw/](openclaw/README.md) |
 | **[Hermes Agent](hermes/README.md)** (Nous Research) | Single self-improving SOC analyst + subagents; CLI/TUI and messaging gateway | Nous Portal, OpenRouter, any OpenAI-compatible endpoint | [HERMES_DEPLOYMENT.md](docs/HERMES_DEPLOYMENT.md) |
 | **[NemoClaw](nemoclaw/README.md)** (NVIDIA) | OpenClaw or Hermes wrapped in the NVIDIA OpenShell sandbox — policy enforcement outside the agent, managed inference, snapshots | **NVIDIA stack only**: Nemotron 3 via build.nvidia.com, local NIM, or Ollama-Nemotron | [NEMOCLAW_DEPLOYMENT.md](docs/NEMOCLAW_DEPLOYMENT.md) |
 
@@ -234,7 +236,7 @@ All runtimes share the same Wazuh MCP server, Runtime API, and two-tier human ap
 
 ### Scaling to a Swarm
 
-The seven agents form a virtual SOC team (see [agent personas](openclaw/agents/_shared/SOUL.md)) — and the same roles scale horizontally into a swarm when alert volume demands it:
+The eleven agents form a virtual SOC team (see [agent personas](openclaw/agents/_shared/SOUL.md)) — and the same roles scale horizontally into a swarm when alert volume demands it:
 
 - **OpenClaw**: raise `agents.defaults.maxConcurrent` and per-agent heartbeat frequency — each webhook delivery and heartbeat run is an independent session, so one triage agent definition fans out across many alerts in parallel.
 - **Hermes**: the analyst agent spawns isolated **subagents** for parallel workstreams (e.g., one per pivot during a multi-host investigation).
@@ -415,13 +417,13 @@ Socket Mode — outbound-only, no webhooks or public endpoints required:
 ├── docker-compose.yml              # Production container orchestration
 ├── openclaw/
 │   ├── openclaw.json               # Gateway & model config
-│   └── agents/                     # 7 SOC agents (AGENTS.md, TOOLS.md, IDENTITY.md)
+│   └── agents/                     # 11 SOC agents (7 pipeline + 4 specialist)
 ├── hermes/                         # Hermes Agent runtime profile (Nous Research)
 ├── nemoclaw/                       # NemoClaw profile — NVIDIA stack only (Nemotron/NIM/OpenShell)
 ├── runtime/autopilot-service/
 │   ├── index.js                    # Runtime service (6,900+ LOC)
 │   ├── slack.js                    # Slack Socket Mode integration
-│   └── *.test.js                   # 582 tests across 16 files
+│   └── *.test.js                   # 586 tests across 16 files
 ├── policies/
 │   ├── policy.yaml                 # Action allowlists, approvers, thresholds
 │   └── toolmap.yaml                # MCP tool mappings (9 action tools)
@@ -552,7 +554,7 @@ Anthropic and Google have **banned** subscription-plan OAuth tokens (Claude Pro/
 ```bash
 cd runtime/autopilot-service
 npm install
-npm test   # 582 tests across 16 files, all passing
+npm test   # 586 tests across 16 files, all passing
 ```
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.

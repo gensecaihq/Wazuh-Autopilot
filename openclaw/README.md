@@ -55,14 +55,20 @@ openclaw/
 │   │   ├── IDENTITY.md              # Role, pipeline position, consumers
 │   │   ├── TOOLS.md                 # Execution API, verification queries
 │   │   └── MEMORY.md                # Accumulated learnings
-│   └── reporting/
-│       ├── AGENTS.md                # Operating instructions
-│       ├── IDENTITY.md              # Role, pipeline position, consumers
-│       ├── TOOLS.md                 # Prometheus, MCP aggregation, Slack blocks
-│       ├── HEARTBEAT.md             # Report schedule checklist
-│       └── MEMORY.md                # Accumulated learnings
+│   ├── reporting/
+│   │   ├── AGENTS.md                # Operating instructions
+│   │   ├── IDENTITY.md              # Role, pipeline position, consumers
+│   │   ├── TOOLS.md                 # Prometheus, MCP aggregation, Slack blocks
+│   │   ├── HEARTBEAT.md             # Report schedule checklist
+│   │   └── MEMORY.md                # Accumulated learnings
+│   ├── vuln-management/            # Vulnerability Management Analyst (+ HEARTBEAT.md, 12h sweep)
+│   ├── threat-intel/               # CTI Analyst (reactive enrichment, no HEARTBEAT.md)
+│   ├── threat-hunter/              # Threat Hunter (+ HEARTBEAT.md, 6h hunts)
+│   └── detection-engineer/         # Detection Engineer (reactive to reporting, no HEARTBEAT.md)
 └── README.md                        # This file
 ```
+
+The first seven agents are the reactive incident pipeline; the last four (`vuln-management`, `threat-intel`, `threat-hunter`, `detection-engineer`) are proactive/specialist functions.
 
 ### OpenClaw Standard File Roles
 
@@ -180,8 +186,14 @@ openclaw doctor --fix
 | `wazuh-policy-guard` | Validate actions | Check policies only |
 | `wazuh-responder` | Execute actions | Execute ONLY after human approval |
 | `wazuh-reporting` | Metrics, reports | Read data, generate reports (automatic) |
+| `wazuh-vuln-management` | Risk-based CVE prioritization (KEV/EPSS/CVSS/SSVC), spike response | Read data, produce prioritized remediation + posture reports |
+| `wazuh-threat-intel` | IOC enrichment, graded confidence, ATT&CK attribution | Read data + external reputation (policy-permitting); enrich cases |
+| `wazuh-threat-hunter` | Proactive hypothesis-driven hunts, ATT&CK coverage | Read data, produce hunt findings + detection recommendations |
+| `wazuh-detection-engineer` | Detection-gap→rule proposals (ADS/Sigma), FP tuning | Read data, produce detection proposals (human-reviewed) |
 
-**Note:** "Automatic" agents can only read data. They cannot execute response actions.
+The first seven are the reactive incident pipeline; the last four are proactive/specialist functions.
+
+**Note:** "Automatic" agents can only read data. They cannot execute response actions. The specialist agents produce intelligence and **proposals** only — vulnerability remediation and detection deployment are human-actioned.
 
 ## Two-Tier Approval Workflow
 
@@ -210,6 +222,10 @@ openclaw doctor --fix
 | `/webhook/plan-request` | wazuh-response-planner | Plan generation |
 | `/webhook/policy-check` | wazuh-policy-guard | Policy validation |
 | `/webhook/execute-action` | wazuh-responder | Human-triggered execution |
+| `/webhook/vuln-spike` | wazuh-vuln-management | Vulnerability spike (PB-005) |
+| `/webhook/ioc-enrichment` | wazuh-threat-intel | Indicator enrichment request |
+| `/webhook/hunt-request` | wazuh-threat-hunter | On-demand threat hunt |
+| `/webhook/detection-review` | wazuh-detection-engineer | Detection review (post-reporting) |
 
 ### Triggering via Webhook
 
@@ -234,7 +250,10 @@ Periodic tasks are handled by agent **heartbeats** (configured per-agent in `ope
 |-------|-----------|------|
 | wazuh-triage | Every 30 min (`0m` to disable) | Sweep untriaged alerts |
 | wazuh-correlation | Every 30 min (`0m` to disable) | Recorrelate active cases |
-| All agents | Every 30 min (default) | Health check and maintenance |
+| wazuh-threat-hunter | Every 6 h (`0m` to disable) | Proactive hypothesis-driven hunt |
+| wazuh-vuln-management | Every 12 h (`0m` to disable) | Vulnerability posture sweep |
+
+Only agents that declare a `heartbeat` block run heartbeats; all others are purely event-driven. See [HEARTBEATS_AND_COST.md](../docs/HEARTBEATS_AND_COST.md).
 
 Additional cron jobs (reports, digests) can be added via the CLI:
 
