@@ -126,6 +126,19 @@ nemoclaw launch wazuh-autopilot      # dashboard: 127.0.0.1:18789 (authenticated
 openclaw agent --agent wazuh-triage --local -m "status check" --session-id smoke
 ```
 
+## Heartbeat Cost on Local GPU (important)
+
+NemoClaw typically runs inference on a **local** GPU (DGX Spark/Station, RTX PRO, or a NIM on your own card). That makes agent **heartbeats** — which run inference on a timer even when there are zero alerts — the dominant idle load: the GPU never returns to baseline. Because NemoClaw runs the same OpenClaw agents, the same tuning applies, and `openclaw-nemoclaw.json` already ships the relaxed defaults (triage + correlation at `30m`).
+
+For a quiet SOC on local hardware, go **fully event-driven** — set both per-agent heartbeats to `"0m"`:
+
+```json5
+// wazuh-triage / wazuh-correlation in openclaw-nemoclaw.json
+"heartbeat": { "every": "0m" }
+```
+
+Dropped webhooks are still recovered by the runtime's zero-inference stalled-pipeline detector, so the node returns to idle the moment a case closes. Full details, math, and profiles: **[HEARTBEATS_AND_COST.md](HEARTBEATS_AND_COST.md)**.
+
 ## Scaling to a Swarm
 
 Run multiple isolated sandboxes behind the same Runtime API for fleet-style operation:
@@ -135,6 +148,8 @@ NEMOCLAW_SANDBOX_NAME=wazuh-autopilot-2 ... bash   # repeat installer per sandbo
 ```
 
 Each sandbox is independently policed, snapshotted, and rollback-able; every response action from every sandbox still funnels through the single Policy Guard gate and two-tier human approval.
+
+> **Runtime-level fixes apply automatically.** Case/plan state lives in the shared Runtime Service, so fixes like *terminal-case grouping exclusion* and *plan-expiry persistence* (issue #33) are enforced by the Runtime API for NemoClaw exactly as for OpenClaw and Hermes — no per-sandbox change needed.
 
 ## Hermes Under NemoClaw
 

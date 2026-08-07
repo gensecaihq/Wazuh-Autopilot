@@ -92,6 +92,13 @@ POST /api/plans/{id}/execute      # Human — Tier 2
 
 Hermes cannot execute active-response directly: execution only happens through the Runtime API's approval-gated endpoints, and the terminal sandbox (below) has no host access.
 
+## Idle Cost & Shared Runtime Behavior
+
+Two notes on how issues seen in the OpenClaw runtime map to Hermes:
+
+- **Heartbeat idle cost does not apply.** Hermes has no timer-based heartbeat: it is inherently event/session-driven (CLI/TUI or the messaging gateway responds to input), so it runs **zero idle inference** when there are no alerts — the node returns to baseline on its own. This is the event-driven behavior that the OpenClaw runtime now offers via `heartbeat: "0m"` (see [HEARTBEATS_AND_COST.md](HEARTBEATS_AND_COST.md)); with Hermes you get it by default. If you wire an external poller to feed alerts into Hermes, size its interval deliberately — that poller, not Hermes, becomes the idle-cost knob.
+- **Runtime-level fixes apply automatically.** Case/plan state lives in the shared Runtime Service, not in the agent runtime. So the fixes for *new alerts grouped into terminal cases* and *plan-expiry persistence* (issue #33) are already in effect for Hermes — they are enforced by the Runtime API that Hermes calls, identical to OpenClaw and NemoClaw.
+
 ## Working Cases
 
 Point Hermes at the canonical per-role playbooks when working a pipeline phase:

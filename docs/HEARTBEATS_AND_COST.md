@@ -6,6 +6,16 @@ Heartbeats are useful, but they run LLM inference **on a timer regardless of whe
 
 This guide explains exactly what runs, what it costs, and how to tune it — including a fully **event-driven** mode with zero idle inference.
 
+## Which runtime this applies to
+
+| Runtime | Heartbeats? | How to tune idle cost |
+|---|---|---|
+| **OpenClaw** (default) | Yes — triage + correlation | `heartbeat.every` per agent in `openclaw.json` (`"0m"` = off) |
+| **NemoClaw** (NVIDIA) | Yes — same OpenClaw agents, but on a **local GPU**, so idle cost matters most | same knob in `nemoclaw/openclaw-nemoclaw.json`; see [NEMOCLAW_DEPLOYMENT.md](NEMOCLAW_DEPLOYMENT.md) |
+| **Hermes** (Nous Research) | **No** — event/session-driven; zero idle inference by design | nothing to tune; see [HERMES_DEPLOYMENT.md](HERMES_DEPLOYMENT.md) |
+
+The rest of this guide is about the OpenClaw/NemoClaw heartbeat model.
+
 ## What actually heartbeats
 
 OpenClaw's rule (important, and easy to get wrong):

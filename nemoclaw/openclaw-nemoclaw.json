@@ -197,7 +197,13 @@
         }
       },
 
-      // Heartbeat on Nano — cheap periodic sweeps
+      // Heartbeat on Nano. COST NOTE (issue #33): heartbeats run inference on a
+      // timer even at zero alerts — on a local DGX/RTX GPU that keeps the card
+      // busy and the node never idles. OpenClaw rule: only agents that declare a
+      // `heartbeat` block run heartbeats, so here only triage + correlation do
+      // (this defaults block is just the merge template). Set both per-agent
+      // heartbeats to "0m" for fully event-driven (recommended for local GPU).
+      // See docs/HEARTBEATS_AND_COST.md.
       "heartbeat": {
         "every": "30m",
         "model": "nvidia/nvidia/nemotron-3-nano-30b-a3b"
