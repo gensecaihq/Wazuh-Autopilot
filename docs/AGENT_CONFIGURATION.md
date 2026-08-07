@@ -146,6 +146,16 @@ The Runtime Service dispatches webhooks to the OpenClaw Gateway when case status
 
 Dispatches are fire-and-forget (async, 10s timeout, 1 retry).
 
+**Specialist auto-dispatch** — the runtime fires three of these automatically at the natural moment (each an extra LLM run; toggle via env):
+
+| Webhook | Auto-fires when | Env flag (default on) |
+|---|---|---|
+| `ioc-enrichment` | a case reaches `triaged` **and** has an external indicator (public IP / domain / url / hash) — side-dispatch, does not change pipeline status | `AUTOPILOT_AUTO_ENRICH` |
+| `vuln-spike` | a `vulnerability-detector` / CVE-bearing alert is ingested | `AUTOPILOT_AUTO_VULN` |
+| `detection-review` | a `weekly` report is stored (rule-tuning cadence) | `AUTOPILOT_AUTO_DETECTION_REVIEW` |
+
+`hunt-request` has no natural pipeline trigger — the Threat Hunter runs on its 6h heartbeat / cron, or on a manual `hunt-request`.
+
 **2. Heartbeats (Periodic sweeps)**
 
 | Agent | Interval | Task |

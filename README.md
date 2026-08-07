@@ -13,7 +13,7 @@
   <a href="https://github.com/gensecaihq/Wazuh-Autopilot/releases"><img src="https://img.shields.io/github/v/release/gensecaihq/Wazuh-Autopilot?color=2ea44f&label=release&style=flat-square" alt="Release"/></a>
   <a href="https://github.com/gensecaihq/Wazuh-Autopilot/blob/main/LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue.svg?style=flat-square" alt="License: MIT"/></a>
   <a href="https://github.com/gensecaihq/Wazuh-Autopilot/actions"><img src="https://img.shields.io/github/actions/workflow/status/gensecaihq/Wazuh-Autopilot/ci.yml?label=CI&style=flat-square" alt="CI"/></a>
-  <img src="https://img.shields.io/badge/tests-586%20passing-2ea44f?style=flat-square" alt="Tests"/>
+  <img src="https://img.shields.io/badge/tests-587%20passing-2ea44f?style=flat-square" alt="Tests"/>
   <a href="https://github.com/gensecaihq/Wazuh-Autopilot/issues"><img src="https://img.shields.io/github/issues/gensecaihq/Wazuh-Autopilot?style=flat-square" alt="Issues"/></a>
   <a href="https://github.com/gensecaihq/Wazuh-Autopilot/stargazers"><img src="https://img.shields.io/github/stars/gensecaihq/Wazuh-Autopilot?style=social" alt="Stars"/></a>
 </p>
@@ -56,7 +56,7 @@
 - **Humans stay in control** — AI *proposes*, humans *approve* and *execute*. Two-tier approval with separation of duties, enforced in code.
 - **Runs anywhere** — cloud LLMs, self-hosted GPU (vLLM), fully air-gapped (Ollama), or the NVIDIA stack (NemoClaw + Nemotron) — same pipeline.
 - **Three agent runtimes** — [OpenClaw](openclaw/README.md) (default), [Hermes](docs/HERMES_DEPLOYMENT.md) (analyst chat-ops), [NemoClaw](docs/NEMOCLAW_DEPLOYMENT.md) (governed, NVIDIA-sandboxed).
-- **Production-grade** — 586 passing tests, structured evidence packs, Prometheus SOC KPIs, policy engine, crash recovery, security-audited.
+- **Production-grade** — 587 passing tests, structured evidence packs, Prometheus SOC KPIs, policy engine, crash recovery, security-audited.
 
 ---
 
@@ -423,7 +423,7 @@ Socket Mode — outbound-only, no webhooks or public endpoints required:
 ├── runtime/autopilot-service/
 │   ├── index.js                    # Runtime service (6,900+ LOC)
 │   ├── slack.js                    # Slack Socket Mode integration
-│   └── *.test.js                   # 586 tests across 16 files
+│   └── *.test.js                   # 587 tests across 16 files
 ├── policies/
 │   ├── policy.yaml                 # Action allowlists, approvers, thresholds
 │   └── toolmap.yaml                # MCP tool mappings (9 action tools)
@@ -554,7 +554,7 @@ Anthropic and Google have **banned** subscription-plan OAuth tokens (Claude Pro/
 ```bash
 cd runtime/autopilot-service
 npm install
-npm test   # 586 tests across 16 files, all passing
+npm test   # 587 tests across 16 files, all passing
 ```
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.

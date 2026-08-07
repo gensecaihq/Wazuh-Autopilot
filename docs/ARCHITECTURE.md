@@ -146,7 +146,7 @@ Whatever the fan-out, every response still funnels through the single Policy Gua
 |---|---|
 | `runtime/autopilot-service/index.js` | Runtime service — cases, plans, policy, approvals, KPIs, evidence (~6,950 LOC) |
 | `runtime/autopilot-service/slack.js` | Slack Socket Mode integration |
-| `runtime/autopilot-service/*.test.js` | 586 tests across 16 files |
+| `runtime/autopilot-service/*.test.js` | 587 tests across 16 files |
 | `openclaw/` | OpenClaw gateway config + 7 agent instruction sets |
 | `hermes/`, `nemoclaw/` | Alternative runtime profiles |
 | `policies/policy.yaml` | Action allowlists, approvers, protected targets, thresholds |

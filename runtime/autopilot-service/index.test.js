@@ -50,6 +50,7 @@ const {
   indexCaseEntities,
   markEntityFalsePositive,
   markEntityCaseTerminal,
+  caseHasExternalIndicators,
   TERMINAL_CASE_STATUSES,
   entityCaseIndex,
   MAX_ENTITY_INDEX_SIZE,
@@ -1567,6 +1568,19 @@ describe("Alert Grouping", () => {
 
     // A fresh alert reusing the same IP must start a new case, not reopen the closed one
     assert.strictEqual(findRelatedCase(entities), null);
+  });
+
+  it("caseHasExternalIndicators gates ioc-enrichment auto-dispatch", () => {
+    // External indicators → true
+    assert.equal(caseHasExternalIndicators({ entities: [{ type: "ip", value: "8.8.8.8" }] }), true);
+    assert.equal(caseHasExternalIndicators({ entities: [{ type: "domain", value: "evil.example.com" }] }), true);
+    assert.equal(caseHasExternalIndicators({ entities: [{ type: "hash", value: "abc123" }] }), true);
+    assert.equal(caseHasExternalIndicators({ entities: [{ type: "url", value: "http://x/y" }] }), true);
+    // Purely internal / no indicators → false (don't spend an LLM run)
+    assert.equal(caseHasExternalIndicators({ entities: [{ type: "ip", value: "10.0.0.5" }] }), false);
+    assert.equal(caseHasExternalIndicators({ entities: [{ type: "user", value: "root" }] }), false);
+    assert.equal(caseHasExternalIndicators({ entities: [] }), false);
+    assert.equal(caseHasExternalIndicators({}), false);
   });
 
   it("TERMINAL_CASE_STATUSES covers closed/executed/rejected/false_positive", () => {

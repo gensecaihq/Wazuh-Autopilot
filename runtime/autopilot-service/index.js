@@ -104,6 +104,12 @@ const config = {
   // Alert grouping
   alertGroupEnabled: process.env.ALERT_GROUP_ENABLED !== "false",
   alertGroupWindowMs: parseInt(process.env.ALERT_GROUP_WINDOW_MS || "3600000", 10),
+  // Specialist-agent auto-dispatch (default on; each fires the corresponding
+  // webhook so a specialist runs at the natural pipeline moment instead of only
+  // on a schedule). Each is an extra LLM run — set to "false" to control cost.
+  autoEnrichEnabled: process.env.AUTOPILOT_AUTO_ENRICH !== "false",       // ioc-enrichment on triage (only when external indicators present)
+  autoVulnEnabled: process.env.AUTOPILOT_AUTO_VULN !== "false",           // vuln-spike on vulnerability detections
+  autoDetectionReviewEnabled: process.env.AUTOPILOT_AUTO_DETECTION_REVIEW !== "false", // detection-review after a weekly report
   // Bootstrap approval — allows agent auto-approval when all approver Slack IDs are placeholders
   // WARNING: This disables human-in-the-loop review for response plans
   bootstrapApproval: process.env.AUTOPILOT_BOOTSTRAP_APPROVAL === "true",
@@ -945,6 +951,19 @@ function indexCaseEntities(caseId, entities, severity) {
 // must never be grouped into a case in one of these states (Issue #33).
 const TERMINAL_CASE_STATUSES = new Set(["closed", "executed", "rejected", "false_positive"]);
 
+// True if a case carries at least one external indicator worth enriching
+// (public IP, or any domain/url/hash). Used to gate ioc-enrichment auto-dispatch
+// so we don't spend an LLM run enriching purely-internal cases.
+function caseHasExternalIndicators(evidencePack) {
+  const entities = (evidencePack && evidencePack.entities) || [];
+  for (const e of entities) {
+    if (!e || !e.type) continue;
+    if (e.type === "domain" || e.type === "url" || e.type === "hash") return true;
+    if (e.type === "ip" && typeof e.value === "string" && !isPrivateIp(e.value)) return true;
+  }
+  return false;
+}
+
 function findRelatedCase(entities) {
   if (!config.alertGroupEnabled || entities.length === 0) return null;
 
@@ -1419,6 +1438,23 @@ async function updateCase(caseId, updates) {
         }
         dispatchToGateway(webhookPath, dispatchPayload).catch((err) => {
           log("warn", "dispatch", "Failed to dispatch status change webhook", { case_id: caseId, status: updates.status, error: err.message });
+          incrementMetric("webhook_dispatch_failures_total");
+        });
+      }
+
+      // Specialist auto-dispatch: enrich external indicators when a case is
+      // triaged. Side-dispatch — does NOT change pipeline status and runs in
+      // parallel with correlation; threat-intel writes graded enrichment back
+      // to the case. Gated so it only spends an LLM run when there's an external
+      // indicator to enrich (config.autoEnrichEnabled → AUTOPILOT_AUTO_ENRICH).
+      if (updates.status === "triaged" && config.autoEnrichEnabled && caseHasExternalIndicators(evidencePack)) {
+        dispatchToGateway("/webhook/ioc-enrichment", {
+          message: `Enrichment request. Case ID: ${caseId}. Enrich the external indicators (IPs/domains/URLs/hashes) on this case with reputation, ATT&CK context, and internal sightings per your AGENTS.md, then write graded enrichment back to the case.`,
+          case_id: caseId,
+          severity: evidencePack.severity,
+          trigger: "auto_enrich",
+        }).catch((err) => {
+          log("warn", "dispatch", "Failed to dispatch ioc-enrichment webhook", { case_id: caseId, error: err.message });
           incrementMetric("webhook_dispatch_failures_total");
         });
       }
@@ -4816,6 +4852,25 @@ function createServer() {
           });
         }
 
+        // Specialist auto-dispatch: vulnerability detections → vuln-management.
+        // Fires for vulnerability-detector rule groups or CVE-bearing alerts so
+        // the Vulnerability Management agent prioritizes (KEV/EPSS/CVSS/SSVC) and
+        // checks for a spike. Gated by config.autoVulnEnabled (AUTOPILOT_AUTO_VULN).
+        const ruleGroups = Array.isArray(alert.rule?.groups) ? alert.rule.groups : [];
+        const isVulnAlert = ruleGroups.some((g) => typeof g === "string" && g.includes("vulnerability"))
+          || entities.some((e) => e.type === "cve");
+        if (config.autoVulnEnabled && isVulnAlert) {
+          dispatchToGateway("/webhook/vuln-spike", {
+            message: `Vulnerability detection. Case ID: ${effectiveCaseId}. Prioritize the findings (KEV/EPSS/CVSS/SSVC), check for a spike per PB-005, and produce a posture report per your AGENTS.md.`,
+            case_id: effectiveCaseId,
+            severity,
+            trigger: "vuln_detection",
+          }).catch((err) => {
+            log("warn", "dispatch", "Failed to dispatch vuln-spike webhook", { case_id: effectiveCaseId, error: err.message });
+            incrementMetric("webhook_dispatch_failures_total");
+          });
+        }
+
         // Record metrics
         incrementMetric("alerts_ingested_total");
         const triageLatency = (Date.now() - triageStart) / 1000;
@@ -6046,6 +6101,22 @@ function createServer() {
         incrementMetric("reports_stored_total", { type: reportType });
         log("info", "reports", "Report stored", { report_id: reportId, type: reportType });
 
+        // Specialist auto-dispatch: after a weekly report (the natural rule-tuning
+        // cadence), trigger the Detection Engineer to turn coverage gaps and
+        // noisy rules into detection proposals. Only "weekly" — avoids looping on
+        // the detection-engineer's own "detection" reports. Gated by
+        // config.autoDetectionReviewEnabled (AUTOPILOT_AUTO_DETECTION_REVIEW).
+        if (reportType === "weekly" && config.autoDetectionReviewEnabled) {
+          dispatchToGateway("/webhook/detection-review", {
+            message: `Detection review. A weekly report (${reportId}) was just produced. Review rule effectiveness and ATT&CK coverage gaps, then propose new/tuned detections (ADS + Sigma + backtest) per your AGENTS.md. Proposals are human-reviewed.`,
+            report_id: reportId,
+            trigger: "post_reporting",
+          }).catch((err) => {
+            log("warn", "dispatch", "Failed to dispatch detection-review webhook", { report_id: reportId, error: err.message });
+            incrementMetric("webhook_dispatch_failures_total");
+          });
+        }
+
         res.writeHead(201, { "Content-Type": JSON_CONTENT_TYPE });
         res.end(JSON.stringify({
           ok: true,
@@ -6431,6 +6502,7 @@ module.exports = {
   indexCaseEntities,
   markEntityFalsePositive,
   markEntityCaseTerminal,
+  caseHasExternalIndicators,
   TERMINAL_CASE_STATUSES,
   entityCaseIndex,
   MAX_ENTITY_INDEX_SIZE,
