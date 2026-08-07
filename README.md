@@ -1,30 +1,62 @@
-<p align="center">
-  <a href="https://wazuh.com"><img src="https://img.shields.io/badge/Wazuh-0080FF?style=for-the-badge&logo=wazuh&logoColor=white" alt="Wazuh"/></a>
-  <a href="https://openclaw.ai"><img src="https://img.shields.io/badge/OpenClaw-FF6B35?style=for-the-badge&logoColor=white" alt="OpenClaw"/></a>
-  <a href="https://modelcontextprotocol.io"><img src="https://img.shields.io/badge/MCP-6B4FBB?style=for-the-badge&logoColor=white" alt="MCP"/></a>
+<div align="center">
+
+<h1>🛡️ Wazuh Autopilot</h1>
+
+<h3>Your Wazuh SIEM, run by an autonomous AI SOC team — that triages, investigates, and responds in seconds, while humans stay in control.</h3>
+
+<p>
+  <strong>Seven security-expert AI agents work every alert like a real SOC shift — Tier 1 → Tier 2 → DFIR → IR Lead → Compliance → Containment → SOC Manager.</strong><br/>
+  Every containment action is gated behind two-tier human approval. No alert goes unread. Every decision leaves an evidence trail.
 </p>
 
-<h1 align="center">Wazuh Autopilot</h1>
-
-<p align="center">
-  <strong>Turn your Wazuh SIEM into an autonomous SOC with AI agents that triage, investigate, and respond — while humans stay in control.</strong>
+<p>
+  <a href="https://github.com/gensecaihq/Wazuh-Autopilot/releases"><img src="https://img.shields.io/github/v/release/gensecaihq/Wazuh-Autopilot?color=2ea44f&label=release&style=flat-square" alt="Release"/></a>
+  <a href="https://github.com/gensecaihq/Wazuh-Autopilot/blob/main/LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue.svg?style=flat-square" alt="License: MIT"/></a>
+  <a href="https://github.com/gensecaihq/Wazuh-Autopilot/actions"><img src="https://img.shields.io/github/actions/workflow/status/gensecaihq/Wazuh-Autopilot/ci.yml?label=CI&style=flat-square" alt="CI"/></a>
+  <img src="https://img.shields.io/badge/tests-578%20passing-2ea44f?style=flat-square" alt="Tests"/>
+  <a href="https://github.com/gensecaihq/Wazuh-Autopilot/issues"><img src="https://img.shields.io/github/issues/gensecaihq/Wazuh-Autopilot?style=flat-square" alt="Issues"/></a>
+  <a href="https://github.com/gensecaihq/Wazuh-Autopilot/stargazers"><img src="https://img.shields.io/github/stars/gensecaihq/Wazuh-Autopilot?style=social" alt="Stars"/></a>
 </p>
 
-<p align="center">
-  <a href="https://github.com/gensecaihq/Wazuh-Autopilot/releases"><img src="https://img.shields.io/github/v/release/gensecaihq/Wazuh-Autopilot?color=green&label=release" alt="Release"/></a>
-  <a href="https://github.com/gensecaihq/Wazuh-Autopilot/blob/main/LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="License: MIT"/></a>
-  <a href="https://github.com/gensecaihq/Wazuh-Autopilot/actions"><img src="https://img.shields.io/github/actions/workflow/status/gensecaihq/Wazuh-Autopilot/ci.yml?label=CI" alt="CI"/></a>
-  <a href="https://github.com/gensecaihq/Wazuh-Autopilot/issues"><img src="https://img.shields.io/github/issues/gensecaihq/Wazuh-Autopilot" alt="Issues"/></a>
-  <a href="https://github.com/gensecaihq/Wazuh-Autopilot/stargazers"><img src="https://img.shields.io/github/stars/gensecaihq/Wazuh-Autopilot" alt="Stars"/></a>
+<p>
+  <img src="https://img.shields.io/badge/Wazuh-0080FF?style=for-the-badge&logo=wazuh&logoColor=white" alt="Wazuh"/>
+  <img src="https://img.shields.io/badge/OpenClaw-FF6B35?style=for-the-badge&logoColor=white" alt="OpenClaw"/>
+  <img src="https://img.shields.io/badge/Hermes-6E56CF?style=for-the-badge&logoColor=white" alt="Hermes Agent"/>
+  <img src="https://img.shields.io/badge/NVIDIA%20NemoClaw-76B900?style=for-the-badge&logo=nvidia&logoColor=white" alt="NVIDIA NemoClaw"/>
+  <img src="https://img.shields.io/badge/MCP-6B4FBB?style=for-the-badge&logoColor=white" alt="MCP"/>
 </p>
 
-<p align="center">
-  <a href="#quick-start">Quick Start</a> &middot;
-  <a href="#how-it-works">How It Works</a> &middot;
-  <a href="#deployment-options">Deploy</a> &middot;
-  <a href="docs/RUNTIME_API.md">API Docs</a> &middot;
-  <a href="CHANGELOG.md">Changelog</a>
+<p>
+  <a href="#-quick-start"><b>Quick Start</b></a> &nbsp;·&nbsp;
+  <a href="#-how-it-works"><b>How It Works</b></a> &nbsp;·&nbsp;
+  <a href="#-agent-runtimes"><b>Runtimes</b></a> &nbsp;·&nbsp;
+  <a href="#-deployment-options"><b>Deploy</b></a> &nbsp;·&nbsp;
+  <a href="docs/RUNTIME_API.md"><b>API</b></a> &nbsp;·&nbsp;
+  <a href="docs/ARCHITECTURE.md"><b>Architecture</b></a> &nbsp;·&nbsp;
+  <a href="CHANGELOG.md"><b>Changelog</b></a>
 </p>
+
+</div>
+
+---
+
+> **Wazuh Autopilot** closes the gap between *detection* and *response*. A Wazuh alert that used to wait hours in a queue is triaged in ~40 seconds, correlated across your fleet, investigated with 7+ live pivot queries, and turned into a risk-assessed response plan — all before an analyst opens their laptop. When it's time to act, a human clicks **Approve** and **Execute**. Nothing dangerous happens without you.
+
+<div align="center">
+
+**⚡ ~40s triage** &nbsp;·&nbsp; **🔍 7+ auto pivots/case** &nbsp;·&nbsp; **✅ 2-tier human approval** &nbsp;·&nbsp; **🧩 48 Wazuh MCP tools** &nbsp;·&nbsp; **🕓 24/7 coverage** &nbsp;·&nbsp; **🔒 air-gap ready**
+
+</div>
+
+---
+
+## ⭐ Why Star This Project
+
+- **A real SOC team, not a chatbot** — seven agents with distinct security-expert personas and strict handoffs, mirroring a human 24/7 shift.
+- **Humans stay in control** — AI *proposes*, humans *approve* and *execute*. Two-tier approval with separation of duties, enforced in code.
+- **Runs anywhere** — cloud LLMs, self-hosted GPU (vLLM), fully air-gapped (Ollama), or the NVIDIA stack (NemoClaw + Nemotron) — same pipeline.
+- **Three agent runtimes** — [OpenClaw](openclaw/README.md) (default), [Hermes](docs/HERMES_DEPLOYMENT.md) (analyst chat-ops), [NemoClaw](docs/NEMOCLAW_DEPLOYMENT.md) (governed, NVIDIA-sandboxed).
+- **Production-grade** — 578 passing tests, structured evidence packs, Prometheus SOC KPIs, policy engine, crash recovery, security-audited.
 
 ---
 
@@ -52,7 +84,7 @@ No alert sits unread. No playbook gets skipped. Every action has an evidence tra
 
 ---
 
-## How It Works
+## 🔬 How It Works
 
 ```
   Wazuh Alert
@@ -120,7 +152,7 @@ No alert sits unread. No playbook gets skipped. Every action has an evidence tra
 
 ---
 
-## Quick Start
+## 🚀 Quick Start
 
 ### Prerequisites
 
@@ -172,7 +204,7 @@ curl http://localhost:9090/metrics
 
 ---
 
-## Deployment Options
+## 📦 Deployment Options
 
 | Method | Best For | Command |
 |---|---|---|
@@ -186,7 +218,7 @@ curl http://localhost:9090/metrics
 
 ---
 
-## Agent Runtimes
+## 🤖 Agent Runtimes
 
 The Autopilot pipeline runs on your choice of agent runtime:
 
@@ -387,14 +419,14 @@ Socket Mode — outbound-only, no webhooks or public endpoints required:
 ├── hermes/                         # Hermes Agent runtime profile (Nous Research)
 ├── nemoclaw/                       # NemoClaw profile — NVIDIA stack only (Nemotron/NIM/OpenShell)
 ├── runtime/autopilot-service/
-│   ├── index.js                    # Runtime service (6400+ LOC)
+│   ├── index.js                    # Runtime service (6800+ LOC)
 │   ├── slack.js                    # Slack Socket Mode integration
-│   └── *.test.js                   # 548 tests across 16 files
+│   └── *.test.js                   # 578 tests across 16 files
 ├── policies/
 │   ├── policy.yaml                 # Action allowlists, approvers, thresholds
 │   └── toolmap.yaml                # MCP tool mappings (9 action tools)
 ├── playbooks/                      # 7 incident response playbooks
-└── docs/                           # 17 documentation files
+└── docs/                           # 18 documentation files
 ```
 
 ---
@@ -478,21 +510,38 @@ Anthropic and Google have **banned** subscription-plan OAuth tokens (Claude Pro/
 
 ## Documentation
 
+**Start here**
+
 | Document | Description |
 |---|---|
-| [QUICKSTART.md](docs/QUICKSTART.md) | Installation guide |
+| [ARCHITECTURE.md](docs/ARCHITECTURE.md) | System architecture — pipeline, runtimes, MCP, control plane |
+| [QUICKSTART.md](docs/QUICKSTART.md) | Installation guide (under 15 minutes) |
+| [SCENARIOS.md](docs/SCENARIOS.md) | End-to-end attack scenarios you can replay |
+
+**Operate**
+
+| Document | Description |
+|---|---|
 | [RUNTIME_API.md](docs/RUNTIME_API.md) | REST API reference |
+| [CLI_REFERENCE.md](docs/CLI_REFERENCE.md) | Command-line reference |
 | [POLICY_AND_APPROVALS.md](docs/POLICY_AND_APPROVALS.md) | Policy engine and approval workflow |
 | [SLACK_SOCKET_MODE.md](docs/SLACK_SOCKET_MODE.md) | Slack setup |
+| [OBSERVABILITY_EXPORT.md](docs/OBSERVABILITY_EXPORT.md) | Prometheus metrics and SOC KPIs |
 | [EVIDENCE_PACK_SCHEMA.md](docs/EVIDENCE_PACK_SCHEMA.md) | Evidence pack format |
-| [AGENT_CONFIGURATION.md](docs/AGENT_CONFIGURATION.md) | Agent customization |
-| [AIR_GAPPED_DEPLOYMENT.md](docs/AIR_GAPPED_DEPLOYMENT.md) | Offline deployment with Ollama |
-| [VLLM_DEPLOYMENT.md](docs/VLLM_DEPLOYMENT.md) | GPU inference with vLLM |
-| [HERMES_DEPLOYMENT.md](docs/HERMES_DEPLOYMENT.md) | Hermes Agent runtime deployment (Nous Research) |
-| [NEMOCLAW_DEPLOYMENT.md](docs/NEMOCLAW_DEPLOYMENT.md) | NemoClaw deployment on the NVIDIA stack (OpenShell, Nemotron, NIM) |
-| [MCP_INTEGRATION.md](docs/MCP_INTEGRATION.md) | MCP server integration |
-| [AGENT_COMMUNICATION.md](docs/AGENT_COMMUNICATION.md) | Agent-to-runtime architecture |
 | [TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md) | Common issues and fixes |
+
+**Deploy & integrate**
+
+| Document | Description |
+|---|---|
+| [AGENT_CONFIGURATION.md](docs/AGENT_CONFIGURATION.md) | Agent files, personas, and customization |
+| [AGENT_COMMUNICATION.md](docs/AGENT_COMMUNICATION.md) | Agent-to-runtime message flow |
+| [MCP_INTEGRATION.md](docs/MCP_INTEGRATION.md) | MCP server integration (48 tools) |
+| [TAILSCALE_MANDATORY.md](docs/TAILSCALE_MANDATORY.md) | Mandatory Tailscale network isolation |
+| [AIR_GAPPED_DEPLOYMENT.md](docs/AIR_GAPPED_DEPLOYMENT.md) | Offline deployment with Ollama |
+| [VLLM_DEPLOYMENT.md](docs/VLLM_DEPLOYMENT.md) | Self-hosted GPU inference with vLLM |
+| [HERMES_DEPLOYMENT.md](docs/HERMES_DEPLOYMENT.md) | Hermes Agent runtime (Nous Research) |
+| [NEMOCLAW_DEPLOYMENT.md](docs/NEMOCLAW_DEPLOYMENT.md) | NemoClaw on the NVIDIA stack (OpenShell, Nemotron, NIM) |
 | [CHANGELOG.md](CHANGELOG.md) | Version history |
 
 ---
@@ -502,7 +551,7 @@ Anthropic and Google have **banned** subscription-plan OAuth tokens (Claude Pro/
 ```bash
 cd runtime/autopilot-service
 npm install
-npm test   # 548 tests across 16 files, all passing
+npm test   # 578 tests across 16 files, all passing
 ```
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.

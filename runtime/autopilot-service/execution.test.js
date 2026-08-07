@@ -27,6 +27,12 @@ process.env.MCP_TIMEOUT_MS = "5000";
 process.env.MAX_CONCURRENT_EXECUTIONS = "2";
 process.env.MCP_AUTH_MODE = "legacy-rest";
 
+// Force a fresh module load so the env vars set above (esp. MAX_CONCURRENT_EXECUTIONS,
+// read once at module init) take effect even when another test file required
+// ./index.js first under the full-suite run. Without this, the cached module keeps
+// the default config and "enforces concurrent execution limit" fails only in-suite.
+delete require.cache[require.resolve("./index.js")];
+
 const {
   createCase,
   updateCase,
@@ -341,12 +347,14 @@ describe("Plan Execution (Responder Enabled)", () => {
   });
 
   it("enforces concurrent execution limit", async () => {
-    // MAX_CONCURRENT_EXECUTIONS is set to 2
+    // MAX_CONCURRENT_EXECUTIONS is set to 2. Hold the MCP responses long enough
+    // that plan1/plan2 are still in-flight when plan3 is attempted — a short delay
+    // races under full-suite load (GC pauses can let the first two finish first).
     mcpResponseHandler = (_req, res) => {
       setTimeout(() => {
         res.writeHead(200, { "Content-Type": "application/json" });
         res.end(JSON.stringify({ success: true }));
-      }, 300);
+      }, 1500);
     };
 
     const plan1 = await createApprovedPlan([{ type: "block_ip", target: "10.0.0.1", params: {} }]);
