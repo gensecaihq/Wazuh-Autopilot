@@ -116,6 +116,8 @@ Wazuh-Autopilot/
 ├── openclaw/
 │   ├── openclaw.json           # Gateway & model configuration
 │   └── agents/                 # 7 SOC agents (AGENTS.md, IDENTITY.md, TOOLS.md, MEMORY.md)
+├── hermes/                     # Hermes Agent runtime profile (Nous Research)
+├── nemoclaw/                   # NemoClaw profile — NVIDIA stack only (Nemotron/NIM/OpenShell)
 ├── policies/                   # Security policies and tool mappings
 ├── playbooks/                  # Incident response playbooks (7 playbooks)
 ├── install/                    # Installation scripts and env template
