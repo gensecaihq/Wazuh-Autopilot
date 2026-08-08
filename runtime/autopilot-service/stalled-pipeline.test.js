@@ -67,7 +67,7 @@ function ensureTestDirs() {
 }
 
 function rmTestDir() {
-  try { fs.rmSync(TEST_DATA_DIR, { recursive: true, force: true }); } catch {}
+  try { fs.rmSync(TEST_DATA_DIR, { recursive: true, force: true }); } catch { /* ignore cleanup errors */ }
 }
 
 // ===================================================================

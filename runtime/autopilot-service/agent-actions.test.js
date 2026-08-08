@@ -7,7 +7,7 @@
  * Run:  node --test agent-actions.test.js
  */
 
-const { describe, it, before, after, beforeEach } = require("node:test");
+const { describe, it, before, after } = require("node:test");
 const assert = require("node:assert/strict");
 const http = require("http");
 const os = require("os");
@@ -68,7 +68,7 @@ function ensureTestDirs() {
 }
 
 function rmTestDir() {
-  try { fs.rmSync(TEST_DATA_DIR, { recursive: true, force: true }); } catch {}
+  try { fs.rmSync(TEST_DATA_DIR, { recursive: true, force: true }); } catch { /* ignore cleanup errors */ }
 }
 
 // Helper: create a case via the alert endpoint (reuses existing triage logic)

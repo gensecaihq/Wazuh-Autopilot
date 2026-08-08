@@ -107,8 +107,8 @@ const config = {
   // Specialist-agent auto-dispatch (default on; each fires the corresponding
   // webhook so a specialist runs at the natural pipeline moment instead of only
   // on a schedule). Each is an extra LLM run — set to "false" to control cost.
-  autoEnrichEnabled: process.env.AUTOPILOT_AUTO_ENRICH !== "false",       // ioc-enrichment on triage (only when external indicators present)
-  autoVulnEnabled: process.env.AUTOPILOT_AUTO_VULN !== "false",           // vuln-spike on vulnerability detections
+  autoEnrichEnabled: process.env.AUTOPILOT_AUTO_ENRICH !== "false", // ioc-enrichment on triage (only when external indicators present)
+  autoVulnEnabled: process.env.AUTOPILOT_AUTO_VULN !== "false", // vuln-spike on vulnerability detections
   autoDetectionReviewEnabled: process.env.AUTOPILOT_AUTO_DETECTION_REVIEW !== "false", // detection-review after a weekly report
   // Bootstrap approval — allows agent auto-approval when all approver Slack IDs are placeholders
   // WARNING: This disables human-in-the-loop review for response plans
@@ -622,7 +622,7 @@ async function getMcpAuthToken() {
 
   // Dedup: if an exchange is already in-flight, await it instead of starting another
   if (mcpJwtExchangePromise) {
-    return await mcpJwtExchangePromise;
+    return mcpJwtExchangePromise;
   }
 
   // Exchange API key for JWT (single in-flight request)
@@ -703,7 +703,7 @@ async function ensureMcpSession() {
 
   // Dedup: if an init is already in-flight, await it instead of starting another
   if (mcpSessionInitPromise) {
-    return await mcpSessionInitPromise;
+    return mcpSessionInitPromise;
   }
 
   mcpSessionInitPromise = _doMcpSessionInit();
@@ -1377,11 +1377,11 @@ async function updateCase(caseId, updates) {
     // Dispatch to downstream agents based on status transitions
     if (Object.prototype.hasOwnProperty.call(updates, "status")) {
       const statusWebhooks = {
-        triaged: "/webhook/case-created",       // → correlation agent
+        triaged: "/webhook/case-created", // → correlation agent
         correlated: "/webhook/investigation-request", // → investigation agent
-        investigated: "/webhook/plan-request",   // → response-planner agent
-        planned: "/webhook/policy-check",        // → policy-guard agent
-        approved: "/webhook/execute-action",     // → responder agent
+        investigated: "/webhook/plan-request", // → response-planner agent
+        planned: "/webhook/policy-check", // → policy-guard agent
+        approved: "/webhook/execute-action", // → responder agent
       };
       const webhookPath = statusWebhooks[updates.status];
       if (webhookPath) {
@@ -1779,9 +1779,7 @@ function validatePlanAction(action, index) {
   if (action.rollback_available !== undefined) {
     if (typeof action.rollback_available === "string") {
       const lower = action.rollback_available.toLowerCase().trim();
-      if (lower === "true") { action.rollback_available = true; }
-      else if (lower === "false") { action.rollback_available = false; }
-      else { errors.push(`Action ${index}: 'rollback_available' must be a boolean`); }
+      if (lower === "true") { action.rollback_available = true; } else if (lower === "false") { action.rollback_available = false; } else { errors.push(`Action ${index}: 'rollback_available' must be a boolean`); }
     } else if (typeof action.rollback_available !== "boolean") {
       errors.push(`Action ${index}: 'rollback_available' must be a boolean`);
     }
@@ -1976,7 +1974,7 @@ function listPlans(options = {}) {
   const plans = [];
   const { state, case_id, limit = 100, offset = 0 } = options;
 
-  for (const [planId, plan] of responsePlans.entries()) {
+  for (const [planId] of responsePlans.entries()) {
     // Trigger expiry check via getPlan (updates stale PROPOSED/APPROVED → EXPIRED)
     let freshPlan;
     try {
@@ -2297,7 +2295,7 @@ async function executePlan(planId, executorId) {
         const mcpResult = await Promise.race([
           callMcpTool(action.type, mcpParams, correlationId),
           new Promise((_, reject) =>
-            setTimeout(() => reject(new Error(`Action timed out after ${actionTimeoutMs}ms`)), actionTimeoutMs)
+            setTimeout(() => reject(new Error(`Action timed out after ${actionTimeoutMs}ms`)), actionTimeoutMs),
           ),
         ]);
 
@@ -3484,9 +3482,9 @@ async function callMcpTool(toolName, params, correlationId) {
   const mcpToolName = resolveMcpTool(toolName);
 
   // Validate tool name to prevent path traversal (SSRF)
-  if (!/^[a-zA-Z0-9_.\-]+$/.test(mcpToolName)) {
+  if (!/^[a-zA-Z0-9_.-]+$/.test(mcpToolName)) {
     incrementMetric("errors_total", { component: "mcp" });
-    throw new Error(`Invalid tool name: contains disallowed characters`);
+    throw new Error("Invalid tool name: contains disallowed characters");
   }
 
   const requestHash = crypto
@@ -3919,12 +3917,12 @@ function resolvePlanId(fabricatedId, caseId, targetState) {
 
 function isValidIdentityId(id) {
   // Identity IDs: alphanumeric, @, ., -, _ — 1-128 chars
-  return typeof id === "string" && id.trim().length > 0 && id.length <= 128 && /^[\w@.\-]+$/.test(id);
+  return typeof id === "string" && id.trim().length > 0 && id.length <= 128 && /^[\w@.-]+$/.test(id);
 }
 
 function sanitizeRequestId(rawId) {
   // Only allow alphanumeric, hyphens, underscores — max 128 chars
-  if (typeof rawId === "string" && /^[a-zA-Z0-9_\-]{1,128}$/.test(rawId)) {
+  if (typeof rawId === "string" && /^[a-zA-Z0-9_-]{1,128}$/.test(rawId)) {
     return rawId;
   }
   return generateRequestId();
@@ -4099,6 +4097,7 @@ function parseJsonBody(req) {
 function sanitizeAlertPayload(payload) {
   if (typeof payload === "string") {
     // Remove control characters except newline/tab, cap length
+    // eslint-disable-next-line no-control-regex -- intentional: strip control chars from untrusted input
     return payload.replace(/[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]/g, "").slice(0, 100000);
   }
   if (Array.isArray(payload)) {
@@ -4110,6 +4109,7 @@ function sanitizeAlertPayload(payload) {
     for (let i = 0; i < Math.min(keys.length, 500); i++) {
       const key = keys[i];
       // Sanitize key too (prevent injection via field names)
+      // eslint-disable-next-line no-control-regex -- intentional: strip control chars from untrusted keys
       const safeKey = key.replace(/[\x00-\x1f\x7f]/g, "").slice(0, 256);
       sanitized[safeKey] = sanitizeAlertPayload(payload[key]);
     }
@@ -4726,7 +4726,7 @@ function createServer() {
             // Merge entities (deduplicate by type+value)
             if (caseData.entities) {
               const existingKeys = new Set(
-                (evidencePack.entities || []).map((e) => `${e.type}:${e.value}`)
+                (evidencePack.entities || []).map((e) => `${e.type}:${e.value}`),
               );
               for (const entity of caseData.entities) {
                 if (!existingKeys.has(`${entity.type}:${entity.value}`)) {
@@ -4744,7 +4744,7 @@ function createServer() {
             // Append evidence refs (deduplicate by ref_id)
             if (caseData.evidence_refs) {
               const existingRefs = new Set(
-                (evidencePack.evidence_refs || []).map((r) => r.ref_id)
+                (evidencePack.evidence_refs || []).map((r) => r.ref_id),
               );
               for (const ref of caseData.evidence_refs) {
                 if (!existingRefs.has(ref.ref_id)) {
@@ -4998,7 +4998,7 @@ function createServer() {
               }
             }
             if (orphanParts.length > 0) {
-              const reconstructed = dataParam + "&" + orphanParts.join("&");
+              const reconstructed = `${dataParam}&${orphanParts.join("&")}`;
               try {
                 parsed = JSON.parse(reconstructed);
                 log("warn", "agent-action", "Reconstructed truncated JSON from unencoded data param", {

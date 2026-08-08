@@ -623,7 +623,7 @@ function truncateActionsText(actions, formatter) {
     text += `\n_...and ${actions.length - MAX_ACTIONS_DISPLAY} more_`;
   }
   if (text.length > MAX_MRKDWN_LENGTH) {
-    text = text.substring(0, MAX_MRKDWN_LENGTH) + "\n_...truncated_";
+    text = `${text.substring(0, MAX_MRKDWN_LENGTH)}\n_...truncated_`;
   }
   return text;
 }

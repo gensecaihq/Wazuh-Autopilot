@@ -81,12 +81,15 @@ module.exports = {
         varsIgnorePattern: "^_",
       },
     ],
+    // functions & module-level state (const collections, flags) are referenced by
+    // hoisted functions but only dereferenced at call time, after module init —
+    // a standard Node module layout, safe from TDZ. classes still checked.
     "no-use-before-define": [
       "error",
       {
         functions: false,
         classes: true,
-        variables: true,
+        variables: false,
       },
     ],
 

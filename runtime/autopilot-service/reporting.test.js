@@ -3,7 +3,7 @@
  * Wazuh Autopilot - Reporting Endpoints Tests
  */
 
-const { describe, it, before, after, beforeEach, afterEach } = require("node:test");
+const { describe, it, before, after, beforeEach } = require("node:test");
 const assert = require("node:assert");
 const fs = require("fs").promises;
 const path = require("path");
@@ -18,13 +18,7 @@ const {
   createCase,
   updateCase,
   getCase,
-  listCases,
   createResponsePlan,
-  listPlans,
-  approvePlan,
-  rejectPlan,
-  responsePlans,
-  PLAN_STATES,
   createServer,
 } = require("./index.js");
 

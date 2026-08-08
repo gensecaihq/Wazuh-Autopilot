@@ -60,7 +60,6 @@ const {
   invalidateMcpSession,
   normalizeGatewayUrl,
   loadPlansFromDisk,
-  savePlanToDisk,
   expireStalePlans,
 } = require("./index.js");
 
@@ -149,7 +148,7 @@ describe("Evidence Pack Management", () => {
         { from: "open", to: "triaged" },
         { from: "triaged", to: "correlated" },
         { from: "correlated", to: "investigated" },
-      ]
+      ],
     );
     // Every entry must have a timestamp
     for (const entry of result.status_history) {
@@ -1091,7 +1090,7 @@ describe("normalizeGatewayUrl", () => {
   it("preserves path and query after scheme rewrite", () => {
     assert.strictEqual(
       normalizeGatewayUrl("ws://127.0.0.1:18789/custom/path?token=abc"),
-      "http://127.0.0.1:18789/custom/path?token=abc"
+      "http://127.0.0.1:18789/custom/path?token=abc",
     );
   });
 
@@ -1099,7 +1098,7 @@ describe("normalizeGatewayUrl", () => {
     // A URL that contains ws:// in the path should not be affected
     assert.strictEqual(
       normalizeGatewayUrl("http://example.com/ws://test"),
-      "http://example.com/ws://test"
+      "http://example.com/ws://test",
     );
   });
 
