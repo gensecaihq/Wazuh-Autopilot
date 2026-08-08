@@ -37,6 +37,12 @@ RUN apk add --no-cache \
     tini \
     && rm -rf /var/cache/apk/*
 
+# Remove the base image's bundled npm CLI. The service runs only `node` at
+# runtime (CMD/healthcheck use node, not npm), so npm is unused build tooling —
+# and its bundled deps (tar, brace-expansion) carry DoS CVEs. Removing it shrinks
+# the image and the attack surface instead of shipping vulnerable, unused code.
+RUN rm -rf /usr/local/lib/node_modules/npm /usr/local/bin/npm /usr/local/bin/npx
+
 # Copy dependencies from deps stage
 COPY --from=deps --chown=autopilot:autopilot /app/node_modules ./node_modules
 
