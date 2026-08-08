@@ -44,7 +44,7 @@
 
 <div align="center">
 
-**⚡ ~40s triage** &nbsp;·&nbsp; **🔍 7+ auto pivots/case** &nbsp;·&nbsp; **✅ 2-tier human approval** &nbsp;·&nbsp; **🧩 48 Wazuh MCP tools** &nbsp;·&nbsp; **🕓 24/7 coverage** &nbsp;·&nbsp; **🔒 air-gap ready**
+**⚡ ~40s triage** &nbsp;·&nbsp; **🔍 7+ auto pivots/case** &nbsp;·&nbsp; **✅ 2-tier human approval** &nbsp;·&nbsp; **🧩 55 Wazuh MCP tools** &nbsp;·&nbsp; **🕓 24/7 coverage** &nbsp;·&nbsp; **🔒 air-gap ready**
 
 </div>
 
@@ -95,7 +95,7 @@ No alert sits unread. No playbook gets skipped. Every action has an evidence tra
   │  Agent  │    │    Agent    │    │    Agent      │    │   Planner    │
   └─────────┘    └─────────────┘    └───────────────┘    └──────┬───────┘
    Extract IOCs   Group related      Query Wazuh via       Generate plan
-   Map MITRE       alerts into        MCP (48 tools)       Assess risk
+   Map MITRE       alerts into        MCP (55 tools)       Assess risk
    Set severity    unified cases      Build timeline       Assign actions
                                                                 │
                                                                 ▼
@@ -130,7 +130,7 @@ Alongside it run **four proactive specialists** — **Vulnerability Management**
 - MITRE ATT&CK technique and tactic mapping
 - Entity-based alert grouping into unified cases
 - AbuseIPDB IP reputation enrichment with TTL caching
-- Investigation agent runs 7+ pivot queries per case via [Wazuh MCP Server](https://github.com/gensecaihq/Wazuh-MCP-Server) (48 tools)
+- Investigation agent runs 7+ pivot queries per case via [Wazuh MCP Server](https://github.com/gensecaihq/Wazuh-MCP-Server) (55 tools)
 
 **Response & Enforcement**
 - Risk-assessed response plans with rollback metadata
@@ -161,7 +161,7 @@ Alongside it run **four proactive specialists** — **Vulnerability Management**
 | Requirement | Description |
 |---|---|
 | [Wazuh](https://wazuh.com) 4.8+ | SIEM platform, installed and running |
-| [Wazuh MCP Server](https://github.com/gensecaihq/Wazuh-MCP-Server) v4.2.1+ | MCP bridge for Wazuh API (48 tools) |
+| [Wazuh MCP Server](https://github.com/gensecaihq/Wazuh-MCP-Server) v4.3.0+ | MCP bridge for Wazuh API (55 tools) |
 | [OpenClaw](https://github.com/openclaw/openclaw) v2026.7.1+ | AI agent framework (latest stable; tested with v2026.7.1-2 — `npm install -g openclaw@latest`) |
 | Node.js 20+ | Runtime service (22+ recommended) |
 | LLM API Key | Claude, GPT, Groq, Mistral, or [local Ollama/vLLM](#local-llm-options) |
@@ -284,7 +284,7 @@ AI agents generate plans. Humans approve them. The runtime enforces policy at ev
 
 ## Wazuh Compatibility
 
-Tested via [Wazuh MCP Server](https://github.com/gensecaihq/Wazuh-MCP-Server) v4.2.1 (48 tools):
+Tested via [Wazuh MCP Server](https://github.com/gensecaihq/Wazuh-MCP-Server) v4.3.0 (55 tools):
 
 | Wazuh Version | Status |
 |---|---|
@@ -539,7 +539,7 @@ Anthropic and Google have **banned** subscription-plan OAuth tokens (Claude Pro/
 |---|---|
 | [AGENT_CONFIGURATION.md](docs/AGENT_CONFIGURATION.md) | Agent files, personas, and customization |
 | [AGENT_COMMUNICATION.md](docs/AGENT_COMMUNICATION.md) | Agent-to-runtime message flow |
-| [MCP_INTEGRATION.md](docs/MCP_INTEGRATION.md) | MCP server integration (48 tools) |
+| [MCP_INTEGRATION.md](docs/MCP_INTEGRATION.md) | MCP server integration (55 tools) |
 | [TAILSCALE_MANDATORY.md](docs/TAILSCALE_MANDATORY.md) | Mandatory Tailscale network isolation |
 | [AIR_GAPPED_DEPLOYMENT.md](docs/AIR_GAPPED_DEPLOYMENT.md) | Offline deployment with Ollama |
 | [VLLM_DEPLOYMENT.md](docs/VLLM_DEPLOYMENT.md) | Self-hosted GPU inference with vLLM |
@@ -584,7 +584,7 @@ Community testing like this makes the project meaningfully better. Thank you. �
 
 | Project | Description |
 |---|---|
-| [Wazuh MCP Server](https://github.com/gensecaihq/Wazuh-MCP-Server) | MCP bridge for Wazuh API (48 tools, RBAC, audit logging) |
+| [Wazuh MCP Server](https://github.com/gensecaihq/Wazuh-MCP-Server) | MCP bridge for Wazuh API (55 tools, RBAC, audit logging) |
 | [OpenClaw](https://github.com/openclaw/openclaw) | AI agent framework powering the SOC agents |
 
 ---
