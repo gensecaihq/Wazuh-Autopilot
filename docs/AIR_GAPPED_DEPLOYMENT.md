@@ -13,7 +13,7 @@ Deploy Wazuh Autopilot in a fully air-gapped environment using Ollama as the sol
 > - Significant hardware is needed: 16 GB RAM minimum, 48+ GB recommended
 > - Inference is slower than cloud APIs — expect 1–10 tokens/sec on CPU
 >
-> If you want a stable, zero-configuration experience, consider using [cloud LLM APIs](../README.md#path-a-cloud-llm-apis-recommended) instead.
+> If you want a stable, zero-configuration experience, consider using [cloud LLM APIs](../README.md#llm-providers) instead.
 
 ## Prerequisites
 

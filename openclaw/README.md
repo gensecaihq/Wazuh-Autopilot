@@ -27,13 +27,13 @@ openclaw/
 │   │   ├── AGENTS.md                # Operating instructions
 │   │   ├── IDENTITY.md              # Role, pipeline position, consumers
 │   │   ├── TOOLS.md                 # Wazuh query patterns, field paths
-│   │   ├── HEARTBEAT.md             # 10-min untriaged sweep checklist
+│   │   ├── HEARTBEAT.md             # 30-min untriaged sweep checklist
 │   │   └── MEMORY.md                # Accumulated learnings (grows during operation)
 │   ├── correlation/
 │   │   ├── AGENTS.md                # Operating instructions
 │   │   ├── IDENTITY.md              # Role, pipeline position, consumers
 │   │   ├── TOOLS.md                 # Correlation queries, entity matching
-│   │   ├── HEARTBEAT.md             # 5-min recorrelation checklist
+│   │   ├── HEARTBEAT.md             # 30-min recorrelation checklist
 │   │   └── MEMORY.md                # Accumulated learnings
 │   ├── investigation/
 │   │   ├── AGENTS.md                # Operating instructions

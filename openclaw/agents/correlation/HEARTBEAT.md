@@ -3,16 +3,16 @@
 **IMPORTANT:** You do NOT have `exec` permissions. Do NOT use `curl`, shell commands, or any CLI tools.
 Use ONLY the `web_fetch` tool for all HTTP requests. `web_fetch` runs on the gateway host and can reach `http://localhost:9090`.
 
-## 5-Minute Active Case Recorrelation
+## 30-Minute Active Case Recorrelation
 
-This procedure runs on a 5-minute cron cycle. Follow each step in order.
+This procedure runs on a 30-minute cron cycle (the shipped default in `openclaw.json`; see `docs/HEARTBEATS_AND_COST.md` for tuning). Follow each step in order.
 
 ### 1. Fetch new triage cases
 Use `web_fetch` to query the runtime API for triaged cases:
 
     web_fetch(url="http://localhost:9090/api/cases?token=<AUTOPILOT_MCP_AUTH>")
 
-Filter the response for cases with status `triaged` created since the last heartbeat (last 5 minutes).
+Filter the response for cases with status `triaged` created since the last heartbeat (last 30 minutes at the default cadence).
 
 ### 2. Fetch active clusters
 Load all open correlated clusters from the last 24 hours that have not been closed or resolved.

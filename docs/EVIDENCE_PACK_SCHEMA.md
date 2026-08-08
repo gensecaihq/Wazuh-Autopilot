@@ -25,7 +25,12 @@ Current version: `1.0`
   "evidence_refs": [],
   "plans": [],
   "approvals": [],
-  "actions": []
+  "actions": [],
+  "status": "open",
+  "status_history": [
+    {"from": null, "to": "open", "timestamp": "2026-02-17T10:30:00.000Z"}
+  ],
+  "feedback": []
 }
 ```
 
@@ -45,6 +50,9 @@ Current version: `1.0`
 | `confidence` | float | No | Confidence score 0.0-1.0 |
 | `auto_verdict` | string | No | Agent-generated verdict (true_positive, false_positive, benign_positive, true_positive_no_action, informational, suspicious, duplicate, not_applicable) |
 | `verdict_reason` | string | No | Explanation of auto_verdict classification logic |
+| `status` | enum | Yes | Case pipeline status (`open`, `triaged`, `correlated`, `investigated`, `planned`, `approved`, `executed`, `closed`, `rejected`, `false_positive`) |
+| `status_history` | array | Yes | Every status transition as `{from, to, timestamp}` |
+| `feedback` | array | Yes | Analyst feedback entries (verdict submissions) |
 
 ### Entities
 
@@ -185,11 +193,14 @@ Response plans proposed by the Response Planner agent.
           "rollback_note": "Removes firewall block rule for this IP"
         }
       ],
-      "status": "pending_approval"
+      "state": "proposed"
     }
   ]
 }
 ```
+
+Plan entries use `state` with the runtime's plan lifecycle values: `proposed`,
+`approved`, `executing`, `completed`, `failed`, `rejected`, `expired`.
 
 ### Approvals
 

@@ -1,5 +1,5 @@
 # Wazuh Autopilot - MCP Tool Mapping Configuration
-# Maps logical operations to actual MCP tool names on Wazuh-MCP-Server v4.2.1
+# Maps logical operations to actual MCP tool names on Wazuh-MCP-Server v4.3.0
 # Version: 2.2.0
 
 schema_version: "2.0"

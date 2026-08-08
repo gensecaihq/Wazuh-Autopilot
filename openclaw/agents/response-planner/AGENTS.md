@@ -118,7 +118,7 @@ For reversible actions, set `rollback_available: true` and include `rollback_com
 
 ## Available Wazuh Active Response Actions
 
-These actions map to MCP Server v4.2.1 tools. The **Required Params** column lists fields you MUST include in the action's `params` object (in addition to `target`).
+These actions map to MCP Server v4.3.0 tools. The **Required Params** column lists fields you MUST include in the action's `params` object (in addition to `target`).
 
 ### Low Risk Actions
 

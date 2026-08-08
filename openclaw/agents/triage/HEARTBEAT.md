@@ -3,16 +3,16 @@
 **IMPORTANT:** You do NOT have `exec` permissions. Do NOT use `curl`, shell commands, or any CLI tools.
 Use ONLY the `web_fetch` tool for all HTTP requests. `web_fetch` runs on the gateway host and can reach `http://localhost:9090`.
 
-## 10-Minute Untriaged Alert Sweep
+## 30-Minute Untriaged Alert Sweep
 
-This procedure runs on a 10-minute cron cycle. Follow each step in order.
+This procedure runs on a 30-minute cron cycle (the shipped default in `openclaw.json`; see `docs/HEARTBEATS_AND_COST.md` for tuning). Follow each step in order.
 
 ### 1. Query for untriaged alerts
 Use `web_fetch` to fetch open cases from the runtime API:
 
     web_fetch(url="http://localhost:9090/api/cases?token=<AUTOPILOT_MCP_AUTH>")
 
-Filter the response for cases with status `open` created in the last 10 minutes. Sort by severity descending, limit 100.
+Filter the response for cases with status `open` created since the last sweep (last 30 minutes at the default cadence). Sort by severity descending, limit 100.
 
 ### 2. Separate critical from general
 Split results into two queues:

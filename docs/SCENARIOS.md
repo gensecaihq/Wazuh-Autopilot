@@ -216,37 +216,36 @@ scp -r openclaw/agents/* admin@openclaw.example.com:/opt/openclaw/agents/
 
 **Best for:** Containerized environments, easy deployment
 
+The `docker-compose.yml` at the project root containerizes the **Runtime Service only**
+(hardened: read-only root filesystem, all capabilities dropped, resource limits). Wazuh,
+the MCP server, and the OpenClaw gateway run on the host (or elsewhere) and are reached
+via `host.docker.internal`:
+
 ```
-┌──────────────────────────────────────────────────────┐
-│                  Docker Network                       │
-│                                                       │
-│  ┌──────────┐  ┌──────────┐  ┌──────────┐           │
-│  │  wazuh   │  │   mcp    │  │ openclaw │           │
-│  │ :55000   │──│  :3000   │──│  :18789  │           │
-│  └──────────┘  └──────────┘  └──────────┘           │
-│                      │                               │
-│                ┌─────┴─────┐                         │
-│                │  runtime  │                         │
-│                │   :9090   │                         │
-│                └───────────┘                         │
-└──────────────────────────────────────────────────────┘
+      Host / other nodes                     Docker
+┌──────────┐ ┌──────────┐ ┌──────────┐   ┌───────────────────────┐
+│  wazuh   │ │   mcp    │ │ openclaw │   │  autopilot (runtime)  │
+│ :55000   │─│  :3000   │─│  :18789  │◀──│  127.0.0.1:9090       │
+└──────────┘ └──────────┘ └──────────┘   └───────────────────────┘
+                                 host.docker.internal
 ```
 
 ### Configuration
 
-The `docker-compose.yml` at the project root provides a production-ready deployment:
-
 ```bash
 # Copy and edit environment variables
 cp .env.example .env
-nano .env
+nano .env    # set AUTOPILOT_MODE=production for fail-fast safety validation
 
-# Start services
+# Start the runtime container
 docker-compose up -d
 
 # View logs
 docker-compose logs -f
 ```
+
+The container binds the runtime to `127.0.0.1:9090` on the host and mounts `./policies`
+read-only. `OPENCLAW_GATEWAY_URL` defaults to `http://host.docker.internal:18789`.
 
 ---
 

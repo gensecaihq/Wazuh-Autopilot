@@ -86,9 +86,10 @@ autopilot_executions_failed_total
 autopilot_responder_disabled_blocks_total
 
 # Counter: Policy denials by reason
-autopilot_policy_denies_total{reason="INSUFFICIENT_EVIDENCE"}
-autopilot_policy_denies_total{reason="APPROVER_NOT_AUTHORIZED"}
-autopilot_policy_denies_total{reason="ACTION_NOT_ALLOWED"}
+autopilot_policy_denies_total{reason="insufficient_evidence"}
+autopilot_policy_denies_total{reason="approver_denied"}
+autopilot_policy_denies_total{reason="action_denied"}
+autopilot_policy_denies_total{reason="protected_target"}
 autopilot_policy_denies_total{reason="time_window_denied"}
 autopilot_policy_denies_total{reason="action_rate_limited"}
 autopilot_policy_denies_total{reason="global_rate_limited"}
@@ -103,6 +104,29 @@ autopilot_webhook_dispatches_total
 
 # Counter: Failed webhook dispatches
 autopilot_webhook_dispatch_failures_total
+
+# Counter: Dead-letter queue for failed dispatches
+autopilot_webhook_dlq_queued_total
+autopilot_webhook_dlq_retried_success_total
+autopilot_webhook_dlq_expired_total
+autopilot_webhook_dlq_evictions_total
+```
+
+#### MCP Circuit Breaker Metrics
+
+```prometheus
+# Counter: Circuit breaker opened after consecutive MCP failures
+autopilot_mcp_circuit_breaker_trips_total
+
+# Counter: Calls rejected while the circuit is open
+autopilot_mcp_circuit_breaker_rejections_total
+```
+
+#### Reporting Metrics
+
+```prometheus
+# Counter: Reports stored, by type
+autopilot_reports_stored_total{type="daily"}
 ```
 
 #### Enrichment Metrics
@@ -147,6 +171,19 @@ autopilot_stalled_pipeline_redispatched_total
 autopilot_errors_total{component="mcp"}
 autopilot_errors_total{component="slack"}
 autopilot_errors_total{component="policy"}
+```
+
+#### Gauges
+
+```prometheus
+# Gauge: Plans currently executing
+autopilot_plans_executing
+
+# Gauge: Plans held in memory
+autopilot_plans_in_memory
+
+# Gauge: Size of the entity→case index
+autopilot_entity_index_size
 ```
 
 ### Scraping Configuration

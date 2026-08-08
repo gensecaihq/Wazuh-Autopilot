@@ -81,7 +81,7 @@ GROQ_API_KEY=gsk-...             # https://console.groq.com/
 }
 ```
 
-The installer (v2.4.4+) handles this automatically when you select "OpenRouter" during LLM provider setup. If you installed manually or with an older version, update the model names in your `openclaw.json` by hand.
+The installer handles this automatically when you select "OpenRouter" during LLM provider setup. If you installed manually or with an older version, update the model names in your `openclaw.json` by hand.
 
 **Required — MCP Server Connection:**
 
@@ -168,7 +168,7 @@ Expected response:
 ```json
 {
   "status": "healthy",
-  "version": "2.4.3",
+  "version": "1.0.0",
   "mode": "bootstrap"
 }
 ```

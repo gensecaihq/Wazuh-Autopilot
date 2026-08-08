@@ -50,7 +50,9 @@ Set these before running the installer:
 # Deployment mode (also settable via --mode flag)
 export AUTOPILOT_MODE=bootstrap           # Skips Tailscale automatically
 export AUTOPILOT_MODE=mcp-only            # MCP Server only
-export AUTOPILOT_MODE=production          # Full install with Tailscale (default)
+# Any other value (or unset) → full install with Tailscale (the default).
+# Note: the *runtime's* AUTOPILOT_MODE (bootstrap|production) in .env is a
+# separate setting — the installer writes it based on the install mode.
 
 # Slack Configuration (prompted during install if not set)
 export SLACK_APP_TOKEN=xapp-1-...

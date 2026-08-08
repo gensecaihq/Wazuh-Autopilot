@@ -71,7 +71,7 @@ NemoClaw prompts for a policy tier after sandbox creation. For a SOC deployment 
 
 | Endpoint | Why |
 |---|---|
-| `MCP_URL` (Tailscale IP:3000) | Wazuh MCP server — 48 query/response tools |
+| `MCP_URL` (Tailscale IP:3000) | Wazuh MCP server — 55 query/response tools |
 | `AUTOPILOT_RUNTIME_URL` | Case/plan API, two-tier approvals |
 | `integrate.api.nvidia.com` | Hosted Nemotron inference (omit if fully local) |
 | Slack endpoints (optional) | Approval channel, if used |

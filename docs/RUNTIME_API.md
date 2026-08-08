@@ -47,7 +47,7 @@ Returns service health status. Exempt from rate limiting and authentication.
 ```json
 {
   "status": "healthy",
-  "version": "2.3.0",
+  "version": "1.0.0",
   "mode": "bootstrap",
   "uptime_seconds": 3600,
   "checks": {
@@ -88,7 +88,7 @@ Returns service version information. Exempt from rate limiting and authenticatio
 ```json
 {
   "service": "wazuh-autopilot",
-  "version": "2.3.0",
+  "version": "1.0.0",
   "node": "v20.x.x"
 }
 ```
@@ -117,6 +117,10 @@ List all cases (most recent first). Requires `read` scope.
 
 **Query Parameters:**
 - `limit` (optional): Maximum number of cases to return (default: 100)
+- `offset` (optional): Number of cases to skip, for pagination (default: 0)
+- `status` (optional): Filter by case status (e.g. `open`, `triaged`, `executed`)
+- `severity` (optional): Filter by severity (`informational`–`critical`)
+- `since` / `until` (optional): ISO 8601 timestamps bounding `created_at`
 
 **Response:**
 ```json
@@ -130,6 +134,23 @@ List all cases (most recent first). Requires `read` scope.
     "status": "open"
   }
 ]
+```
+
+#### GET /api/cases/summary
+
+Aggregated case statistics. Requires `read` scope.
+
+**Response:**
+```json
+{
+  "total": 120,
+  "by_status": {"open": 4, "triaged": 10, "executed": 6, "closed": 90},
+  "by_severity": {"low": 40, "medium": 55, "high": 20, "critical": 5},
+  "false_positive_count": 10,
+  "last_24h": 12,
+  "last_7d": 48,
+  "last_30d": 120
+}
 ```
 
 #### POST /api/cases
@@ -386,9 +407,9 @@ List response plans. Requires `read` scope.
     "risk_level": "low",
     "actions": [
       {
-        "action": "block_ip",
+        "type": "block_ip",
         "target": "192.168.1.100",
-        "parameters": {"duration": 86400}
+        "params": {"duration": 86400}
       }
     ],
     "approver_id": null,
@@ -397,6 +418,20 @@ List response plans. Requires `read` scope.
     "executed_at": null
   }
 ]
+```
+
+#### GET /api/plans/summary
+
+Aggregated plan statistics. Requires `read` scope.
+
+**Response:**
+```json
+{
+  "total": 30,
+  "by_state": {"proposed": 2, "approved": 1, "completed": 24, "failed": 3},
+  "success_rate": 0.89,
+  "last_24h": 5
+}
 ```
 
 #### POST /api/plans
@@ -412,15 +447,15 @@ Create a new response plan in `proposed` state. Requires `write` scope. Typicall
   "risk_level": "low",
   "actions": [
     {
-      "action": "block_ip",
+      "type": "block_ip",
       "target": "192.168.1.100",
-      "parameters": {"duration": 86400}
+      "params": {"duration": 86400}
     }
   ]
 }
 ```
 
-Required fields: `case_id`, `actions` (non-empty array). Each action must have `action` and `target`.
+Required fields: `case_id`, `actions` (array — may be empty for a no-action plan). Each action must have `type` and `target`; action-specific fields go in `params` (e.g. `process_id` for `kill_process`, `username` for `disable_user`, `file_path` for `quarantine_file`).
 
 > **Policy Enforcement:** Before creating the plan, the runtime checks the `response_planning` time window (if `time_windows.enabled: true`). Then each action is validated against the action allowlist in `policies/policy.yaml` — actions must be `enabled` and must meet the `min_confidence` threshold. Unlisted actions are denied when `deny_unlisted: true`. Returns `400` if any policy check denies the plan.
 
@@ -635,6 +670,60 @@ Executes an approved plan (Tier 2). Equivalent to `POST /api/plans/:planId/execu
 ```json
 {"ok": true, "plan_id": "PLAN-...", "state": "completed"}
 ```
+
+#### GET /api/agent-action/search-alerts
+
+Proxies an alert search to the Wazuh MCP server. Requires `read` scope.
+
+**Query Parameters:**
+| Parameter | Required | Description |
+|-----------|----------|-------------|
+| `query` | No | Search query string |
+| `time_range` | No | Lookback window (default `24h`) |
+| `limit` | No | Max results (default 50) |
+| `rule_id` | No | Filter by Wazuh rule ID |
+| `agent_id` | No | Filter by Wazuh agent ID |
+| `level` | No | Filter by rule level |
+
+#### GET /api/agent-action/get-agent
+
+Fetches Wazuh agent details via the MCP server. Requires `read` scope.
+
+**Query Parameters:**
+| Parameter | Required | Description |
+|-----------|----------|-------------|
+| `agent_id` | Yes | Numeric Wazuh agent ID (1–6 digits) |
+
+#### GET /api/agent-action/store-report
+
+Stores a generated report. Requires `write` scope.
+
+**Query Parameters:**
+| Parameter | Required | Description |
+|-----------|----------|-------------|
+| `type` | Yes | One of `hourly`, `daily`, `weekly`, `monthly`, `shift`, `executive`, `incident`, `vulnerability`, `threat_intel`, `hunt`, `detection` |
+| `data` | Yes | URL-encoded JSON report body |
+
+---
+
+### KPIs and Reports
+
+#### GET /api/kpis
+
+SLA/KPI metrics computed from case status histories. Requires `read` scope.
+
+**Query Parameters:**
+- `period` (optional): One of `1h`, `8h`, `24h` (default), `7d`, `30d`
+
+Returns MTTx values **in seconds** (MTTD, MTTT, MTTI, MTTR, MTTC), `auto_triage_rate`, `false_positive_rate`, and `sla_compliance` (SLA thresholds configurable via `SLA_TRIAGE_SECONDS`, default 900, and `SLA_RESPONSE_SECONDS`, default 3600).
+
+#### GET /api/reports
+
+Lists stored reports (most recent first). Requires `read` scope.
+
+**Query Parameters:**
+- `type` (optional): Filter by report type (same whitelist as `store-report`)
+- `limit` (optional): 1–1000 (default 20)
 
 ---
 

@@ -420,39 +420,42 @@ Evidence:
 
 Required Approver: standard or higher
 
-[Approve] [Deny] [Request Changes]
+[Approve (Tier 1)] [Reject]
 ```
 
-### 4. Approval Token Generated
+### 4. Approver Responds
 
-A single-use, time-limited token is created:
-
-```json
-{
-  "token": "abc123...",
-  "plan_id": "PLAN-20260217-abc12345",
-  "case_id": "CASE-20260217-abc12345",
-  "expires_at": "2026-02-17T11:00:00Z",
-  "used": false
-}
-```
-
-### 5. Approver Responds
-
-The approver clicks **Approve** or uses:
+The approver clicks **Approve (Tier 1)** or uses:
 
 ```
 /wazuh approve PLAN-20260217-abc12345
 ```
 
-### 6. Token Validated and Consumed
+### 5. Approver Authorization Checked
 
-Policy Guard verifies:
-- Token is valid
-- Token not expired
-- Token not already used
-- Approver is authorized
-- Approver is not the requester (self-approval prevention)
+On approval, the runtime verifies (`policyCheckApprover`):
+- The approver's Slack ID belongs to an approver group in `policy.yaml`
+- That group's `max_risk_level` covers the plan's risk level
+- That group's `can_approve` list covers every action type in the plan
+
+For Slack approvals, the workspace and channel are additionally checked against the
+`slack` allowlists in `policy.yaml` (`policyCheckSlackContext`).
+
+If every approver Slack ID in `policy.yaml` is still a placeholder (development /
+bootstrap), the check denies by default unless `AUTOPILOT_BOOTSTRAP_APPROVAL=true`
+is set explicitly.
+
+> **Note:** The runtime contains single-use approval-token scaffolding
+> (`generateApprovalToken` / `validateApprovalToken` / `consumeApprovalToken`), but it
+> is **not wired into the approval flow**. Authorization is enforced through approver-group
+> membership as described above, plus separation of duties at execution time.
+
+### 6. Execution Requested (Tier 2)
+
+Execution is a second, separate human step. The runtime enforces separation of duties:
+the executor must be a different person from the approver (`"Executor must be different
+from approver (separation of duties)"`), and each action is re-checked against the time
+window, rate limits, idempotency window, and the protected-target deny-list.
 
 ### 7. Action Executed (If Enabled)
 
@@ -464,32 +467,34 @@ If the Responder agent is enabled:
 
 ## Deny Reason Codes
 
-Every policy denial includes a structured reason code:
+Every policy denial is counted in the `autopilot_policy_denies_total` metric with one of
+these `reason` labels (exactly as emitted by the runtime):
 
-| Code | Description | Enforcement Level |
+| Reason label | Description | Enforcement Point |
 |------|-------------|-------------------|
-| `WORKSPACE_NOT_ALLOWED` | Slack workspace not in allowlist | Slack layer |
-| `CHANNEL_NOT_ALLOWED` | Slack channel not in allowlist | Slack layer |
-| `APPROVER_NOT_AUTHORIZED` | Approver lacks permission for this action | Runtime (plan approval) |
-| `ACTION_NOT_ALLOWED` | Action type not in allowlist | Runtime (plan creation) |
-| `CRITICAL_ASSET_ELEVATED_APPROVAL` | Critical asset requires admin approval | Policy Guard (advisory) |
-| `INSUFFICIENT_EVIDENCE` | Not enough evidence items | Runtime (plan execution) |
-| `LOW_CONFIDENCE` | Confidence score below threshold | Runtime (plan creation) |
-| `time_window_denied` | Operation outside allowed hours | Runtime (plan creation/execution) |
+| `action_denied` | Action type not in allowlist, actions globally disabled, or confidence below the configured minimum | Runtime (plan creation) |
+| `protected_target` | Target IP/CIDR or agent ID is on the `protected_targets` deny-list | Runtime (plan creation and execution) |
+| `time_window_denied` | Operation outside allowed hours | Runtime (plan creation and execution) |
+| `approver_denied` | Approver lacks group membership, risk-level clearance, or action authorization | Runtime (plan approval) |
+| `insufficient_evidence` | Not enough evidence items | Runtime (plan execution) |
+| `duplicate_action` | Same action+target within dedup window | Runtime (per-action execution) |
 | `action_rate_limited` | Per-action hourly/daily limit exceeded | Runtime (per-action execution) |
 | `global_rate_limited` | Global hourly/daily limit exceeded | Runtime (per-action execution) |
-| `duplicate_action` | Same action+target within dedup window | Runtime (per-action execution) |
-| `EXPIRED_APPROVAL` | Approval token has expired | Runtime |
-| `INVALID_APPROVAL_TOKEN` | Token is invalid or malformed | Runtime |
+
+Slack workspace/channel allowlist failures are rejected at the Slack layer with a
+descriptive error message (no metric label). The approval-token reason codes
+(`EXPIRED_APPROVAL`, `INVALID_APPROVAL_TOKEN`, …) belong to the inactive token
+scaffolding and are never emitted in the live flow.
 
 ## Metrics
 
 Policy decisions are tracked via Prometheus metrics:
 
 ```
-autopilot_policy_denies_total{reason="INSUFFICIENT_EVIDENCE"}
-autopilot_policy_denies_total{reason="APPROVER_NOT_AUTHORIZED"}
-autopilot_policy_denies_total{reason="ACTION_NOT_ALLOWED"}
+autopilot_policy_denies_total{reason="insufficient_evidence"}
+autopilot_policy_denies_total{reason="approver_denied"}
+autopilot_policy_denies_total{reason="action_denied"}
+autopilot_policy_denies_total{reason="protected_target"}
 autopilot_policy_denies_total{reason="time_window_denied"}
 autopilot_policy_denies_total{reason="action_rate_limited"}
 autopilot_policy_denies_total{reason="global_rate_limited"}

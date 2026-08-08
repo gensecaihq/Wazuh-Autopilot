@@ -152,9 +152,9 @@ Wazuh-Autopilot/
    # TOOLS.md   - Tool usage guidance, query patterns
    # MEMORY.md  - Seed template for accumulated learnings
 
-   # Copy shared files:
-   cp ~/.openclaw/wazuh-autopilot/agents/triage/SOUL.md ~/.openclaw/wazuh-autopilot/agents/new-agent/
-   cp ~/.openclaw/wazuh-autopilot/agents/triage/USER.md ~/.openclaw/wazuh-autopilot/agents/new-agent/
+   # Copy shared files (SOUL.md and USER.md live in agents/_shared/):
+   cp ~/.openclaw/wazuh-autopilot/agents/_shared/SOUL.md ~/.openclaw/wazuh-autopilot/agents/new-agent/
+   cp ~/.openclaw/wazuh-autopilot/agents/_shared/USER.md ~/.openclaw/wazuh-autopilot/agents/new-agent/
 
    # Register the agent in openclaw/openclaw.json agents.list array
    ```

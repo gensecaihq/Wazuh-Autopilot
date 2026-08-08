@@ -1,6 +1,6 @@
 # Playbook: Vulnerability Spike Detection and Response
 
-## Classification
+## Document Control
 
 | Field | Value |
 |-------|-------|

@@ -16,7 +16,7 @@ The Model Context Protocol (MCP) provides a standardized interface for AI agents
 │                           Wazuh Autopilot                                │
 │                                                                          │
 │  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐                     │
-│  │   Triage    │  │   Correlate │  │  Investigate │  ... (7 agents)     │
+│  │   Triage    │  │   Correlate │  │  Investigate │  ... (11 agents)    │
 │  │   Agent     │  │   Agent     │  │    Agent     │                     │
 │  └──────┬──────┘  └──────┬──────┘  └──────┬───────┘                     │
 │         │                │                │                              │
@@ -187,32 +187,39 @@ MCP_URL=http://127.0.0.1:3000
 
 ## Available MCP Tools
 
-The Wazuh MCP Server v4.2.1 exposes **48 tools** organized into five categories. All tools are invoked via the MCP protocol through the `/mcp` (Streamable HTTP) or `/sse` (legacy) endpoints.
+The Wazuh MCP Server v4.3.0 exposes **55 tools** organized into nine categories: 36 query/read tools (Alerts, Agents, Vulnerabilities, Security Analysis, Compliance, System) and 19 action tools (Active Response, Verification, Rollback). All tools are invoked via the MCP protocol through the `/mcp` (Streamable HTTP) or `/sse` (legacy) endpoints.
 
-### Tool Reference
+### Tool Reference — Query Tools (36)
 
 | Category | Tool | Description |
 |----------|------|-------------|
-| **Alert Operations** | `get_wazuh_alerts` | Retrieve alerts with filtering (limit, rule_id, level, agent_id, timestamp range) |
+| **Alerts** | `get_wazuh_alerts` | Retrieve alerts with filtering (limit, rule_id, level, agent_id, timestamp range) |
 | | `get_wazuh_alert_summary` | Alert summary grouped by field (time_range, group_by) |
+| | `get_alerts_aggregated` | Aggregated alert counts grouped by field (group_by, time_range) |
 | | `analyze_alert_patterns` | Identify trends and anomalies (time_range, min_frequency) |
 | | `search_security_events` | Search events across Wazuh data (query, time_range, limit) |
-| **Agent Operations** | `get_wazuh_agents` | Agent information (agent_id, status filter, limit) |
+| **Agents** | `get_wazuh_agents` | Agent information (agent_id, status filter, limit) |
 | | `get_wazuh_running_agents` | List running/active agents |
 | | `check_agent_health` | Agent health status (agent_id required) |
 | | `get_agent_processes` | Running processes from agent (agent_id, limit) |
 | | `get_agent_ports` | Open ports from agent (agent_id, limit) |
 | | `get_agent_configuration` | Agent configuration details (agent_id) |
-| **Vulnerability Operations** | `get_wazuh_vulnerabilities` | Vulnerability data (agent_id, severity, limit) |
+| **Vulnerabilities** | `get_wazuh_vulnerabilities` | Vulnerability data (agent_id, severity, limit) |
 | | `get_wazuh_critical_vulnerabilities` | Critical vulnerabilities only (limit) |
 | | `get_wazuh_vulnerability_summary` | Vulnerability statistics (time_range) |
 | **Security Analysis** | `analyze_security_threat` | AI-powered threat analysis (indicator, indicator_type) |
 | | `check_ioc_reputation` | IoC reputation check (indicator, indicator_type) |
+| | `search_external_context` | External threat-intel context search for an indicator |
 | | `perform_risk_assessment` | Risk assessment (agent_id optional) |
 | | `get_top_security_threats` | Top threats by frequency/severity (limit, time_range) |
 | | `generate_security_report` | Comprehensive report (report_type, include_recommendations) |
-| | `run_compliance_check` | Compliance framework check (framework: PCI-DSS/HIPAA/SOX/GDPR/NIST) |
-| **System Monitoring** | `get_wazuh_statistics` | Comprehensive statistics |
+| **Compliance** | `run_compliance_check` | Compliance framework check (framework: PCI-DSS/HIPAA/SOX/GDPR/NIST) |
+| | `get_iso27001_dashboard` | ISO 27001 compliance dashboard |
+| | `get_iso27001_control_detail` | Detail for a specific ISO 27001 control |
+| | `get_iso27001_gap_analysis` | ISO 27001 gap analysis |
+| | `get_iso27001_alerts` | Alerts mapped to ISO 27001 controls |
+| | `get_sca_policy_checks` | SCA (Security Configuration Assessment) policy checks |
+| **System** | `get_wazuh_statistics` | Comprehensive statistics |
 | | `get_wazuh_weekly_stats` | Weekly statistics |
 | | `get_wazuh_cluster_health` | Cluster health info |
 | | `get_wazuh_cluster_nodes` | Cluster node information |
@@ -223,7 +230,33 @@ The Wazuh MCP Server v4.2.1 exposes **48 tools** organized into five categories.
 | | `get_wazuh_manager_error_logs` | Recent error logs (limit) |
 | | `validate_wazuh_connection` | Connection validation |
 
-> **Note:** Vulnerability Operations tools require Wazuh Indexer 4.8.0 or later.
+### Tool Reference — Action Tools (19)
+
+Action tools require the `wazuh:write` RBAC scope on the MCP server and are only reachable through the runtime's plan-execution path — agents never call them directly. Logical action names are mapped to these tools in [`policies/toolmap.yaml`](../policies/toolmap.yaml).
+
+| Category | Tool | Description |
+|----------|------|-------------|
+| **Active Response** | `wazuh_block_ip` | Block a source IP via active response |
+| | `wazuh_isolate_host` | Network-isolate an agent host |
+| | `wazuh_kill_process` | Kill a process on an agent |
+| | `wazuh_disable_user` | Disable a user account |
+| | `wazuh_quarantine_file` | Quarantine a file on an agent |
+| | `wazuh_firewall_drop` | Firewall drop rule for an IP |
+| | `wazuh_host_deny` | Add an IP to hosts.deny |
+| | `wazuh_active_response` | Run an arbitrary configured active-response command |
+| | `wazuh_restart` | Restart a Wazuh agent |
+| **Verification** | `wazuh_check_blocked_ip` | Verify an IP block took effect |
+| | `wazuh_check_agent_isolation` | Verify host isolation status |
+| | `wazuh_check_process` | Verify a process was terminated |
+| | `wazuh_check_user_status` | Verify a user account state |
+| | `wazuh_check_file_quarantine` | Verify a file quarantine |
+| **Rollback** | `wazuh_unisolate_host` | Restore network access for an isolated host |
+| | `wazuh_enable_user` | Re-enable a disabled user account |
+| | `wazuh_restore_file` | Restore a quarantined file |
+| | `wazuh_firewall_allow` | Remove a firewall drop rule |
+| | `wazuh_host_allow` | Remove an IP from hosts.deny |
+
+> **Note:** Vulnerability tools require Wazuh Indexer 4.8.0 or later.
 
 ### Tool Examples
 
@@ -314,7 +347,7 @@ action_operations:
 
 ## Authentication
 
-The Wazuh MCP Server v4.2.1 supports three authentication modes, configured via `AUTH_MODE`.
+The Wazuh MCP Server v4.3.0 supports three authentication modes, configured via `AUTH_MODE`.
 
 ### Bearer Token Authentication (Default)
 
@@ -452,7 +485,7 @@ MCP calls are logged with correlation IDs:
 
 ## API Endpoints
 
-The Wazuh MCP Server v4.2.1 exposes the following HTTP endpoints:
+The Wazuh MCP Server v4.3.0 exposes the following HTTP endpoints:
 
 | Endpoint | Method | Purpose | Auth Required |
 |----------|--------|---------|---------------|

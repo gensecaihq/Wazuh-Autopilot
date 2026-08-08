@@ -90,7 +90,7 @@ After sandbox creation NemoClaw asks which policy tier to apply: **Restricted**,
 
 | Endpoint | Why |
 |---|---|
-| `MCP_URL` (Tailscale IP:3000) | Wazuh MCP server — 48 tools |
+| `MCP_URL` (Tailscale IP:3000) | Wazuh MCP server — 55 tools |
 | `AUTOPILOT_RUNTIME_URL` | Case/plan API, two-tier approvals, webhooks |
 | `integrate.api.nvidia.com` | Hosted Nemotron (omit if fully local) |
 | Slack endpoints (optional) | Approval channel |

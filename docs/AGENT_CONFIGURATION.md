@@ -36,7 +36,7 @@ Each agent has a workspace directory containing OpenClaw standard files:
 │   ├── USER.md         # Organizational context (customize per deployment)
 │   ├── IDENTITY.md     # Role, pipeline position, downstream consumers
 │   ├── TOOLS.md        # Query patterns, field paths, API usage
-│   ├── HEARTBEAT.md    # 10-min sweep checklist (cron-triggered agents)
+│   ├── HEARTBEAT.md    # Periodic sweep checklist (cron-triggered agents; cadence per agent, see below)
 │   └── MEMORY.md       # Accumulated learnings (grows during operation)
 ├── correlation/        # Same structure (+ HEARTBEAT.md)
 ├── investigation/      # Same structure (no HEARTBEAT.md)
@@ -139,6 +139,7 @@ The Runtime Service dispatches webhooks to the OpenClaw Gateway when case status
 | Case status → `correlated` | `/webhook/investigation-request` | Investigation |
 | Case status → `investigated` | `/webhook/plan-request` | Response Planner |
 | Plan created | `/webhook/policy-check` | Policy Guard |
+| Case status → `approved` | `/webhook/execute-action` | Responder |
 | Vulnerability spike | `/webhook/vuln-spike` | Vulnerability Management |
 | IOC enrichment request | `/webhook/ioc-enrichment` | Threat Intelligence |
 | Hunt request | `/webhook/hunt-request` | Threat Hunter |
@@ -228,7 +229,7 @@ Each agent's domain knowledge is defined in its `AGENTS.md` file. Here's what ea
 ### Responder Agent (`openclaw/agents/responder/AGENTS.md`)
 
 - 5 action playbooks with Wazuh commands, pre-checks, verification queries, and rollback
-- Protected entities (processes: wazuh-agent, init, systemd, lsass; networks: RFC 1918, loopback)
+- Protected entities (processes: wazuh-agent, init/systemd/launchd, csrss, services, sshd, winlogon, lsass; networks: RFC 1918, loopback)
 - Safeguards: action limits (10/plan, 50/hour, 200/day), circuit breaker (3 failures, 15-min reset)
 - Responder capability toggle: `AUTOPILOT_RESPONDER_ENABLED` (default: `false`)
 
@@ -340,7 +341,7 @@ SLACK_BOT_TOKEN=xoxb-...
 
 ```bash
 # Verify all agent directories have required files
-for agent in triage correlation investigation response-planner policy-guard responder reporting; do
+for agent in triage correlation investigation response-planner policy-guard responder reporting vuln-management threat-intel threat-hunter detection-engineer; do
   echo "--- $agent ---"
   ls ~/.openclaw/wazuh-autopilot/agents/$agent/
 done

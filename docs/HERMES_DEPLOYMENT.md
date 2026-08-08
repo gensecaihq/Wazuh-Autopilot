@@ -62,7 +62,7 @@ hermes gateway               # messaging gateway (Slack, Telegram, Discord, ...)
 
 ## Wazuh Integration
 
-### MCP Server (48 tools)
+### MCP Server (55 tools)
 
 The Wazuh MCP server is HTTP-based; the profile bridges it to Hermes' stdio MCP client with `mcp-remote`:
 

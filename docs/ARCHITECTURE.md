@@ -15,7 +15,7 @@ How Wazuh Autopilot turns a raw Wazuh alert into a governed, human-approved resp
    ┌────┴───────────┐   verify / dispatch   ┌──────────────────────────────┐
    │  Wazuh MCP     │ ◀──────────────────── │      Runtime Service          │
    │  Server        │                       │  (runtime/autopilot-service)  │
-   │  (48 tools)    │ ──────────────────▶   │  cases · plans · policy ·     │
+   │  (55 tools)    │ ──────────────────▶   │  cases · plans · policy ·     │
    └────────────────┘     tool calls        │  approvals · KPIs · evidence  │
                                             └───────────────┬──────────────┘
                                                             │ notify / approve
@@ -30,7 +30,7 @@ How Wazuh Autopilot turns a raw Wazuh alert into a governed, human-approved resp
 Three planes:
 
 - **Control plane** — the **Runtime Service** (`runtime/autopilot-service/index.js`). Owns case state, response plans, the policy engine, the two-tier approval workflow, KPIs, and evidence packs. This is the source of truth; agents and humans both act through its REST API.
-- **Data plane** — the **Wazuh MCP Server** (48 tools). The only path agents use to read Wazuh (alerts, auth history, process trees, vulnerabilities) and to dispatch active response.
+- **Data plane** — the **Wazuh MCP Server** (55 tools). The only path agents use to read Wazuh (alerts, auth history, process trees, vulnerabilities) and to dispatch active response.
 - **Reasoning plane** — the **agent runtime** (OpenClaw, Hermes, or NemoClaw) hosting the eleven SOC agents (seven-stage reactive pipeline + four specialists) that do the analysis.
 
 ## The SOC team
@@ -107,7 +107,7 @@ The pipeline is runtime-agnostic. All three speak to the same MCP server and Run
 
 | Runtime | Shape | Inference | Guide |
 |---|---|---|---|
-| **OpenClaw** (default) | 7 webhook-driven pipeline agents, 24/7 | Any provider | [openclaw/README.md](../openclaw/README.md) |
+| **OpenClaw** (default) | 11 webhook-driven agents (7-stage pipeline + 4 specialists), 24/7 | Any provider | [openclaw/README.md](../openclaw/README.md) |
 | **Hermes** (Nous Research) | 1 self-improving analyst agent + subagents; CLI/TUI + messaging gateway | Nous Portal, OpenRouter, any OpenAI-compatible endpoint | [HERMES_DEPLOYMENT.md](HERMES_DEPLOYMENT.md) |
 | **NemoClaw** (NVIDIA) | OpenClaw/Hermes wrapped in the OpenShell sandbox — out-of-process policy, managed inference, snapshots | **NVIDIA stack only** — Nemotron 3 via build.nvidia.com / local NIM / Ollama-Nemotron | [NEMOCLAW_DEPLOYMENT.md](NEMOCLAW_DEPLOYMENT.md) |
 
@@ -144,10 +144,10 @@ Whatever the fan-out, every response still funnels through the single Policy Gua
 
 | Path | What |
 |---|---|
-| `runtime/autopilot-service/index.js` | Runtime service — cases, plans, policy, approvals, KPIs, evidence (~6,950 LOC) |
+| `runtime/autopilot-service/index.js` | Runtime service — cases, plans, policy, approvals, KPIs, evidence (~7,000 LOC) |
 | `runtime/autopilot-service/slack.js` | Slack Socket Mode integration |
 | `runtime/autopilot-service/*.test.js` | 587 tests across 16 files |
-| `openclaw/` | OpenClaw gateway config + 7 agent instruction sets |
+| `openclaw/` | OpenClaw gateway config + 11 agent instruction sets |
 | `hermes/`, `nemoclaw/` | Alternative runtime profiles |
 | `policies/policy.yaml` | Action allowlists, approvers, protected targets, thresholds |
 | `policies/toolmap.yaml` | MCP tool mappings (9 action tools + verification/rollback) |
@@ -157,7 +157,7 @@ Whatever the fan-out, every response still funnels through the single Policy Gua
 ## Further reading
 
 - [RUNTIME_API.md](RUNTIME_API.md) — REST API reference
-- [MCP_INTEGRATION.md](MCP_INTEGRATION.md) — the 48 MCP tools and how agents call them
+- [MCP_INTEGRATION.md](MCP_INTEGRATION.md) — the 55 MCP tools and how agents call them
 - [AGENT_COMMUNICATION.md](AGENT_COMMUNICATION.md) — agent ↔ runtime message flow
 - [AGENT_CONFIGURATION.md](AGENT_CONFIGURATION.md) — agent files, personas, customization
 - [POLICY_AND_APPROVALS.md](POLICY_AND_APPROVALS.md) — policy engine and approval workflow

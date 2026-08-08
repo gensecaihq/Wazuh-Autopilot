@@ -15,7 +15,7 @@ Wazuh Autopilot implements a defense-in-depth security model:
 
 | Level | Description | Actions Allowed |
 |-------|-------------|-----------------|
-| `read-only` | Triage, Correlation, Investigation, Reporting | Query, search, read (auto-execute) |
+| `read-only` | Triage, Correlation, Investigation, Reporting, Vulnerability Management, Threat Intelligence, Threat Hunter, Detection Engineer | Query, search, read (auto-execute); specialists produce intelligence and proposals only |
 | `approval` | Response Planner, Policy Guard, Responder | Requires human approval before execution |
 
 ### Key Security Controls
@@ -24,15 +24,15 @@ Wazuh Autopilot implements a defense-in-depth security model:
    - Requires explicit `AUTOPILOT_RESPONDER_ENABLED=true`
    - Cannot be enabled without policy configuration
 
-2. **Approval Tokens**
-   - Single-use, cryptographically signed
-   - TTL of 60 minutes (configurable)
-   - Bound to specific plan, case, and approver
+2. **Two-Tier Human Approval**
+   - Approve (Tier 1) and Execute (Tier 2) are separate human steps
+   - Approver authorization via policy groups (`policy.yaml`): membership, risk-level clearance, per-action authorization
+   - Separation of duties enforced in code — the executor must differ from the approver
 
-3. **Policy Guard Gate**
-   - All actions must pass policy evaluation
-   - Constitutional AI principles (immutable rules)
-   - 13-step evaluation chain
+3. **Policy Enforcement**
+   - Runtime-enforced gates on every plan: action allowlist, confidence threshold, protected-target deny-list, evidence requirement, time window, rate limits, idempotency
+   - Policy Guard agent adds a defense-in-depth 13-step LLM evaluation chain (first DENY wins)
+   - Fail-closed in production mode
 
 4. **Network Security**
    - Production mode requires Tailscale
@@ -110,7 +110,7 @@ export SLACK_BOT_TOKEN="xoxb-..."
 
 ## Security Updates
 
-Security updates are released as patch versions (e.g., 2.0.1, 2.0.2).
+Security updates are released as patch versions (e.g., 1.0.1, 1.0.2).
 
 Subscribe to releases to receive notifications:
 - Watch this repository with "Releases only"

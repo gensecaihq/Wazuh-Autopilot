@@ -55,6 +55,9 @@ Each status transition triggers a webhook that activates the next agent. The run
 | Create response plan | `GET /api/agent-action/create-plan` | `POST /api/plans` |
 | Approve/deny plan | `GET /api/agent-action/approve-plan` | `POST /api/plans/:id/approve` |
 | Execute plan | `GET /api/agent-action/execute-plan` | `POST /api/plans/:id/execute` |
+| Search Wazuh alerts (MCP proxy) | `GET /api/agent-action/search-alerts` | direct MCP call |
+| Get Wazuh agent details (MCP proxy) | `GET /api/agent-action/get-agent` | direct MCP call |
+| Store generated report | `GET /api/agent-action/store-report` | `POST /api/reports` |
 
 ## Security
 

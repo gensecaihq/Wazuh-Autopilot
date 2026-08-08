@@ -223,23 +223,28 @@ Approval requests include interactive buttons:
 
 ### Case Cards
 
-When alerts are triaged, a case card is posted:
+When a case is created, a notification card is posted to the alerts channel (severity
+emoji + title header; informational only — no buttons):
 
 ```
 ┌─────────────────────────────────────────┐
-│ 📋 Case Created: CASE-20260217-abc12345          │
+│ ⚠️ Brute force attack detected           │
 │                                         │
-│ Severity: High | Confidence: 85%        │
-│ Title: Brute force attack detected      │
+│ Case ID: CASE-20260217-abc12345         │
+│ Severity: HIGH                          │
+│                                         │
+│ Summary: 47 failed SSH logins from ...  │
 │                                         │
 │ Entities:                               │
-│ • IP: 192.168.1.100                     │
-│ • User: admin                           │
-│ • Host: web-server-01                   │
+│ • ip: 192.168.1.100                     │
+│ • user: admin                           │
+│ • host: web-server-01                   │
 │                                         │
-│ [View Details] [Investigate] [Plan]     │
+│ Created at Feb 17 at 10:42 AM           │
 └─────────────────────────────────────────┘
 ```
+
+Interactive buttons appear only on approval requests (previous section).
 
 ## Fallback Mode
 

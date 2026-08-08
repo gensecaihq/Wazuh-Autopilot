@@ -728,7 +728,7 @@ sudo ./install/install.sh
 **Check agent files exist:**
 ```bash
 ls ~/.openclaw/wazuh-autopilot/agents/triage/
-# Expected: AGENTS.md IDENTITY.md TOOLS.md MEMORY.md (HEARTBEAT.md for triage/correlation/reporting)
+# Expected: AGENTS.md IDENTITY.md TOOLS.md MEMORY.md (HEARTBEAT.md for triage/correlation/reporting/threat-hunter/vuln-management)
 # Shared files in: ~/.openclaw/wazuh-autopilot/agents/_shared/ (SOUL.md USER.md)
 ```
 
@@ -813,7 +813,7 @@ Ensure the API user has the correct roles. The default `wazuh-wui` user should h
 
 **Step 5 — Wazuh Indexer (for vulnerability tools only):**
 
-3 of the 29 MCP tools (vulnerability scanning) require the Wazuh Indexer (OpenSearch, port 9200). If you don't have the Indexer running, those 3 tools will fail — but the other 26 should work:
+3 of the 55 MCP tools (vulnerability scanning) require the Wazuh Indexer (OpenSearch, port 9200). If you don't have the Indexer running, those 3 tools will fail — but the rest should work:
 
 ```bash
 # Check if Indexer is configured in MCP:
@@ -834,7 +834,7 @@ curl -k https://YOUR_WAZUH_HOST:55000/ -o /dev/null -w "%{http_code}" -s
 
 | Wazuh Version | MCP Support | Notes |
 |---------------|------------|-------|
-| **4.14.x** | Fully supported | All 29 tools work |
+| **4.14.x** | Fully supported | All 55 tools work |
 | 4.10.x – 4.13.x | Fully supported | All features |
 | 4.8.x – 4.9.x | Fully supported | Minimum for vulnerability tools |
 | 4.0.0 – 4.7.x | Limited | 3 vulnerability tools unavailable |

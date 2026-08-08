@@ -1610,7 +1610,7 @@ function consumeApprovalToken(token, approverId, decision, reason = "") {
   if (decision === "approve") {
     incrementMetric("approvals_granted_total");
   } else {
-    incrementMetric("policy_denies_total", { reason: "APPROVER_DENIED" });
+    incrementMetric("policy_denies_total", { reason: "approver_denied" });
   }
 
   log("info", "approval", `Approval ${decision}`, {

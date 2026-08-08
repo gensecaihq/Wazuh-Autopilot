@@ -73,7 +73,7 @@ hermes                       # CLI/TUI session
 hermes gateway               # messaging gateway (Slack/Telegram/... chat-ops)
 ```
 
-The Wazuh MCP server (48 tools) is bridged via `mcp-remote` in `config.yaml` — Hermes gets the same query surface (alert search, auth history, process trees, agent actions) as the OpenClaw agents.
+The Wazuh MCP server (55 tools) is bridged via `mcp-remote` in `config.yaml` — Hermes gets the same query surface (alert search, auth history, process trees, agent actions) as the OpenClaw agents.
 
 ## Human-in-the-Loop
 

@@ -421,12 +421,12 @@ Socket Mode — outbound-only, no webhooks or public endpoints required:
 ├── hermes/                         # Hermes Agent runtime profile (Nous Research)
 ├── nemoclaw/                       # NemoClaw profile — NVIDIA stack only (Nemotron/NIM/OpenShell)
 ├── runtime/autopilot-service/
-│   ├── index.js                    # Runtime service (6,900+ LOC)
+│   ├── index.js                    # Runtime service (7,000+ LOC)
 │   ├── slack.js                    # Slack Socket Mode integration
 │   └── *.test.js                   # 587 tests across 16 files
 ├── policies/
 │   ├── policy.yaml                 # Action allowlists, approvers, thresholds
-│   └── toolmap.yaml                # MCP tool mappings (9 action tools)
+│   └── toolmap.yaml                # MCP tool mappings (9 actions + 5 verification + 5 rollback)
 ├── playbooks/                      # 7 incident response playbooks
 └── docs/                           # 19 documentation files
 ```
