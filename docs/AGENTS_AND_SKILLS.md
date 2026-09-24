@@ -71,4 +71,4 @@ In **swarm** mode the entry agent starts, and agents call `handoff_to_agent` alo
 
 ## Evals
 
-**Evals** runs `strands-agents-evals` suites in dry-run mode: nothing is written to cases, actions or reports. The built-in suites check triage fundamentals (including prompt injection hidden in alert fields), response-planning safety (proposals only through `propose_action`), and KEV-first vulnerability prioritization. Run them after changing a model, skill or prompt.
+**Evals** runs `strands-agents-evals` suites in dry-run mode: nothing is written to cases, actions or reports. The four built-in suites check triage fundamentals (including prompt injection hidden in alert fields), response-planning safety (proposals only through `propose_action`), KEV-first vulnerability prioritization, and that the platform engineer checks fleet connectivity and manager health. Run them after changing a model, skill or prompt.

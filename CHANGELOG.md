@@ -24,6 +24,7 @@ Wazuh Autopilot is now a Strands Agents platform. This is a breaking change: the
 - **New agent: Wazuh Platform Engineer** ("Keeper") owns the 9 manager/cluster/ingestion tools no agent used, and runs a 4-hourly platform-health workflow to catch detection blind spots (disconnected agents, dropped events, manager errors).
 - **Tool grants fixed.** Skills told agents to call tools they didn't have (e.g. the DFIR investigator lacked `get_wazuh_alerts`). Grants were widened where the job needs them, and tests require a skill's tools to be held by every agent carrying it. Four MCP *prompts* (`threat_hunt`, `security_investigation`, `compliance_audit`, `vulnerability_assessment`) were wrongly granted as tools and are removed.
 - **Action catalog** now states which actions need custom agent-side active-response scripts (`isolate_host`, `kill_process`, `quarantine_file`) and that API-triggered blocks are permanent until rolled back.
+- UI dependencies: react-router upgraded to v7 (fixes GHSA-wrjc-x8rr-h8h6 open redirect); `npm audit --omit=dev` is clean. UI package renamed to `wazuh-autopilot-ui` 3.0.0.
 - Demo data uses official rule levels; the mock server's invented rules moved into the custom range. Credentials passed as `?token=` (SSE) are redacted from access logs. Built-in agents, workflows and eval suites now pick up new defaults on upgrade field by field, keeping admin customizations. Missing agent icons added.
 
 ### Removed
