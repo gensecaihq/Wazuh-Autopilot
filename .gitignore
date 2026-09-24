@@ -48,3 +48,9 @@ reply-issue*.md
 
 # Local AI assistant working notes (never committed)
 CLAUDE.md
+__pycache__/
+*.pyc
+.pytest_cache/
+.venv/
+ui/dist/
+*.tsbuildinfo

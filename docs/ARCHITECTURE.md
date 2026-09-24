@@ -1,165 +1,53 @@
 # Architecture
 
-How Wazuh Autopilot turns a raw Wazuh alert into a governed, human-approved response. This is the map of the whole system — the agent pipeline, the runtime service, the MCP data plane, and the pluggable agent runtimes.
-
-## The 10,000-foot view
+Wazuh Autopilot is one Python service (FastAPI + [Strands Agents](https://strandsagents.com)) with a React console, backed by Postgres (SQLite for development). Wazuh is reached only through the [Wazuh MCP Server](https://github.com/gensecaihq/Wazuh-MCP-Server). Strands is the only agent engine.
 
 ```
-   ┌────────────┐      alert webhook       ┌──────────────────────────────┐
-   │   Wazuh    │ ───────────────────────▶ │   Agent Runtime (one of 3)   │
-   │  Manager   │                          │  OpenClaw / Hermes / NemoClaw │
-   │ + Indexer  │ ◀─── queries (MCP) ─────  │  → 11 SOC agents              │
-   └────────────┘                          └───────────────┬──────────────┘
-        ▲                                                   │ REST (cases, plans)
-        │ active response (MCP)                             ▼
-   ┌────┴───────────┐   verify / dispatch   ┌──────────────────────────────┐
-   │  Wazuh MCP     │ ◀──────────────────── │      Runtime Service          │
-   │  Server        │                       │  (runtime/autopilot-service)  │
-   │  (55 tools)    │ ──────────────────▶   │  cases · plans · policy ·     │
-   └────────────────┘     tool calls        │  approvals · KPIs · evidence  │
-                                            └───────────────┬──────────────┘
-                                                            │ notify / approve
-                                                            ▼
-                                                   ┌──────────────────┐
-                                                   │  Human (Slack /  │
-                                                   │  REST) — Approve │
-                                                   │  + Execute       │
-                                                   └──────────────────┘
+                     ┌──────────────────────────── Autopilot container ───────────────────────────┐
+ Wazuh manager       │                                                                              │
+     │               │  ingestion ──► incidents ──► orchestrator ──► Strands Swarm / Graph          │
+     ▼               │  (poll/webhook)   (grouping)     (worker pool)    13 agents, 37 skills        │
+ Wazuh MCP Server ◄──┼── agents' MCP client (read + wazuh_check_* only)          │ propose_action     │
+  (55 tools)    ◄──┐ │                                                         ▼                    │
+                   └─┼── executor ◄── approved ◄── autonomy policy ◄── action proposals             │
+                     │      │ verify · rollback          ▲ humans (approvals queue, RBAC)            │
+                     │      ▼                            │                                          │
+                     │  audit log · traces (spans) · metrics · SSE ──► console (React)              │
+                     └──────────────────────────────────────────────────────────────────────────────┘
 ```
 
-Three planes:
+## Components
 
-- **Control plane** — the **Runtime Service** (`runtime/autopilot-service/index.js`). Owns case state, response plans, the policy engine, the two-tier approval workflow, KPIs, and evidence packs. This is the source of truth; agents and humans both act through its REST API.
-- **Data plane** — the **Wazuh MCP Server** (55 tools). The only path agents use to read Wazuh (alerts, auth history, process trees, vulnerabilities) and to dispatch active response.
-- **Reasoning plane** — the **agent runtime** (OpenClaw, Hermes, or NemoClaw) hosting the eleven SOC agents (seven-stage reactive pipeline + four specialists) that do the analysis.
+| Component | Code | Role |
+|---|---|---|
+| API | `backend/app/api/` | REST API (`/api/v1`), SSE event stream, OpenAPI at `/api/docs` |
+| Ingestion | `backend/app/ingest.py` | Polls `get_wazuh_alerts` through MCP or accepts webhooks; normalizes alerts; groups them into incidents by rule + source within a window; starts workflows under an hourly run budget |
+| Orchestrator | `backend/app/orchestrator.py` | Worker pool that runs workflows as a Strands `Swarm` (handoffs) or `Graph` (fixed DAG), single-agent playground turns, and action execution; cancellation and restart recovery |
+| Agent factory | `backend/app/swarm/factory.py` | Builds each Strands `Agent` from its roster entry: system prompt, model, allowed tools, `AgentSkills` plugin, hooks |
+| MCP client | `backend/app/swarm/mcp.py` | Streamable HTTP client with JWT exchange (`/auth/token`). The agents' client filters out state-changing tools; the executor's client doesn't |
+| Platform tools | `backend/app/swarm/tools.py` | Case, entity, ATT&CK, finding, action-proposal, report and detection tools, attributed to the calling agent and run |
+| Policy engine | `backend/app/policy.py` | Decides whether a proposal is refused, needs a human, or can run autonomously |
+| Executor | `backend/app/executor.py` | Runs approved actions through MCP, verifies with `wazuh_check_*`, rolls back, and starts the Responder's post-action workflow |
+| Tracing | `backend/app/swarm/telemetry.py` | Strands hooks → spans (agent, model, tool, handoff, guardrail) with tokens and latency; live SSE; optional OTLP export |
+| Evals | `backend/app/evals.py` | `strands-agents-evals` suites run in dry-run mode |
+| Console | `ui/` | Vite + React + Tailwind, served by the backend |
 
-## The SOC team
+## Incident lifecycle
 
-Eleven agents, each a security-expert persona mirroring a human SOC role. Seven form the **reactive incident pipeline** (alert → response) with strict handoffs; four are **proactive/specialist** functions that a mature SOC runs alongside it. Full personas live in [`openclaw/agents/*/IDENTITY.md`](../openclaw/agents) and the team roster in [`_shared/SOUL.md`](../openclaw/agents/_shared/SOUL.md).
-
-### Reactive incident pipeline
-
-| # | Agent | Human role | Permission | Reads | Writes |
-|---|---|---|---|---|---|
-| 1 | **Triage** | Tier 1 SOC Analyst | read-only | alerts | case (auto) |
-| 2 | **Correlation** | Tier 2 Analyst / Detection Engineer | read-only | cases, alerts | case links (auto) |
-| 3 | **Investigation** | Tier 3 / DFIR Investigator | read-only | Wazuh Indexer (pivots) | evidence (auto) |
-| 4 | **Response Planner** | Incident Response Lead | plan-only | case, evidence | plan (proposed) |
-| 5 | **Policy Guard** | Security Compliance Officer | validate-only | plan, policy | decision (allow/deny) |
-| 6 | **Responder** | SecOps / Containment Operator | execute (gated) | plan, approvals | active response |
-| 7 | **Reporting** | SOC Manager / Metrics Analyst | read-only | metrics, cases | reports |
-
-Agents 1–3 and 7 are **fully automated but read-only** — they can never change a host. Agents 4–6 form the response path, and nothing in that path executes without two human approvals.
-
-### Proactive / specialist functions
-
-| # | Agent | Human role | Permission | Trigger | Output |
-|---|---|---|---|---|---|
-| 8 | **Vulnerability Management** | Vulnerability Management Analyst | read-only | vuln-spike webhook / scheduled | risk-based CVE priority (KEV/EPSS/CVSS/SSVC), posture report |
-| 9 | **Threat Intelligence** | CTI Analyst | read-only | ioc-enrichment webhook / scheduled | graded enrichment, ATT&CK attribution, IOC lifecycle |
-| 10 | **Threat Hunter** | Threat Hunter | read-only | scheduled hunts / hunt-request | hypothesis-driven findings, ATT&CK coverage, hunt→detection |
-| 11 | **Detection Engineer** | Detection Engineer | read-only | detection-review (post-reporting) | detection proposals (ADS/Sigma), FP tuning — human-reviewed |
-
-The specialists are read-only and produce **proposals and intelligence**, never live changes: vuln remediation and detection deployment are human-actioned; hunt findings escalate into the reactive pipeline. Threat Intelligence enriches cases in place; Vulnerability Management and Threat Hunter feed the pipeline and the Detection Engineer; the Detection Engineer closes the loop from Reporting's coverage gaps back into new detections.
-
-### Case lifecycle
-
-```
-new ──▶ triaged ──▶ correlated ──▶ investigated ──▶ (plan proposed)
-                                                          │
-                                          approved ◀── PROPOSED
-                                             │
-                                          executed ──▶ closed   (auto-close after grace period)
-                                             │
-                          (also possible: false_positive at any read stage)
-```
-
-Status transitions are validated in the runtime — e.g. a plan whose actions all failed does **not** advance the case to `executed` (which would corrupt MTTR/SLA and trigger auto-close).
-
-## Two-tier human approval
-
-The core safety property: **AI proposes, humans dispose.**
-
-```
-Response Planner          Human (Tier 1)         Human (Tier 2)         Responder
-   creates plan  ──▶  POST /plans/{id}/approve ──▶ POST /plans/{id}/execute ──▶ active response
-   (state: proposed)     (authorization +           (authorization +           (verify + evidence)
-                          separation of duties)      time window + rate limit)
-```
-
-Every step passes through the **policy engine** (`policies/policy.yaml`):
-
-- **Action allowlists** — only permitted action types on permitted targets.
-- **Protected-target deny-list** — spoofable alert fields (e.g. `srcip`) can never steer active response at loopback, the manager (agent `000`), or configured critical IPs/agents. Checked at both plan creation and execution.
-- **Approver authorization** — approve/execute are authorized by Slack user ID against an approver group, with a workspace/channel allowlist.
-- **Separation of duties** — the executor must differ from the approver.
-- **Confidence thresholds, time windows, rate limits, idempotency** — enforced per action.
-
-The Responder is **disabled by default** (`AUTOPILOT_RESPONDER_ENABLED`) and runs at most `MAX_CONCURRENT_EXECUTIONS` plans at once.
-
-## Active response & verification
-
-Agents dispatch active response through the MCP server's action tools (`block_ip`, `isolate_host`, `kill_process`, `disable_user`, `quarantine_file`, `firewall_drop`, `host_deny`, `restart_wazuh`, `active_response`). Wazuh's API returns success for *dispatch acceptance*, not on-host execution — so with `AUTOPILOT_VERIFY_ACTIONS=true` the runtime calls the declared verification tool (`check_blocked_ip`, `check_agent_isolation`, `check_file_quarantine`, …) after each action and records `verified: true|false|null` plus an explanatory note. See [POLICY_AND_APPROVALS.md](POLICY_AND_APPROVALS.md) and issue #32.
-
-## Agent runtimes (pluggable reasoning plane)
-
-The pipeline is runtime-agnostic. All three speak to the same MCP server and Runtime API and honor the same approval workflow — they differ only in *how* the agents are hosted.
-
-| Runtime | Shape | Inference | Guide |
-|---|---|---|---|
-| **OpenClaw** (default) | 11 webhook-driven agents (7-stage pipeline + 4 specialists), 24/7 | Any provider | [openclaw/README.md](../openclaw/README.md) |
-| **Hermes** (Nous Research) | 1 self-improving analyst agent + subagents; CLI/TUI + messaging gateway | Nous Portal, OpenRouter, any OpenAI-compatible endpoint | [HERMES_DEPLOYMENT.md](HERMES_DEPLOYMENT.md) |
-| **NemoClaw** (NVIDIA) | OpenClaw/Hermes wrapped in the OpenShell sandbox — out-of-process policy, managed inference, snapshots | **NVIDIA stack only** — Nemotron 3 via build.nvidia.com / local NIM / Ollama-Nemotron | [NEMOCLAW_DEPLOYMENT.md](NEMOCLAW_DEPLOYMENT.md) |
-
-Because policy enforcement and approvals live in the **Runtime Service** (not the agent), the safety guarantees hold identically regardless of which runtime — or which LLM — you choose.
-
-## Scaling to a swarm
-
-The pipeline roles scale horizontally when alert volume demands it:
-
-- **OpenClaw** — raise `agents.defaults.maxConcurrent` and heartbeat frequency; each webhook/heartbeat run is an independent session.
-- **Hermes** — the analyst spawns isolated subagents for parallel workstreams (e.g. one pivot per host).
-- **NemoClaw** — run multiple OpenShell sandboxes behind the same Runtime API for fleet-style isolation (independently policed, snapshotted, rollback-able).
-
-Whatever the fan-out, every response still funnels through the single Policy Guard gate and two-tier approval — more workers, same chain of command.
-
-## Deployment topologies
-
-| Topology | Inference | Network | Guide |
-|---|---|---|---|
-| **Cloud LLM** | OpenRouter / Anthropic / etc. | Runtime + gateway on loopback; remote access via Tailscale | [QUICKSTART.md](QUICKSTART.md) |
-| **Self-hosted GPU** | vLLM (Qwen3, Llama 3.3, DeepSeek-R1) | Same | [VLLM_DEPLOYMENT.md](VLLM_DEPLOYMENT.md) |
-| **Air-gapped** | Ollama, local embeddings | Zero external egress | [AIR_GAPPED_DEPLOYMENT.md](AIR_GAPPED_DEPLOYMENT.md) |
-| **NVIDIA / governed** | Nemotron 3 (NIM/build.nvidia.com) | OpenShell deny-all + allowlist | [NEMOCLAW_DEPLOYMENT.md](NEMOCLAW_DEPLOYMENT.md) |
+1. An alert at or above `min_level` arrives. If an open incident with the same rule and source was updated within `group_window_min`, the alert joins it. Otherwise a new incident (`INC-0001`, …) is opened with initial entities and ATT&CK techniques from the alert.
+2. The matching alert workflow starts: **Alert → Containment** (swarm) for high and critical, **Alert triage** (graph) for medium.
+3. Agents query Wazuh through MCP, record entities, ATT&CK techniques and findings, hand off to each other, and the IR lead calls `propose_action`.
+4. The policy engine refuses the proposal (observe mode, protected target, disabled action), queues it for a human, or approves it autonomously.
+5. The executor runs approved actions, verifies them on the endpoint, records the result, and starts the Responder's verification workflow. Everything is written to the audit log and the incident timeline.
 
 ## Security boundaries
 
-- **Gateway binds loopback only** (`127.0.0.1:18789`) — never exposed to the internet; remote access is Tailscale-only ([TAILSCALE_MANDATORY.md](TAILSCALE_MANDATORY.md)).
-- **MCP reached over the Tailscale network**, authenticated by bearer token.
-- **Least-privilege tools** — read-only agents are denied `write`/`exec`/`delete`/`browser`; only the response path gets `write`, only the Responder gets gated execution.
-- **Untrusted alert content** — alert payloads are treated as untrusted input; agents follow prompt-injection handling in their playbooks, and the protected-target deny-list neutralizes spoofed targeting fields.
-- **Fail-secure** — uncertain policy state defaults to DENY.
+- **Agents can't change Wazuh state.** State-changing `wazuh_*` tools are removed from the agents' MCP tool list, and an `ApprovalGate` hook cancels any that slip through. Only the executor calls them, and only for approved actions.
+- **Alert content is untrusted.** Alerts are passed between markers, and every agent carries the `prompt-injection-defense` skill (OWASP LLM01/LLM06).
+- **Fail-secure policy.** Unknown or disabled actions and protected targets are refused. Critical-risk actions never run autonomously.
+- **RBAC everywhere.** Five roles, scoped API tokens, full audit log.
+- **Secrets** are stored server-side and masked in the API. The container runs as non-root, and the port binds to `127.0.0.1` by default. Tokens passed as `?token=` (SSE) are redacted from access logs.
 
-## Where things live
+## Data model
 
-| Path | What |
-|---|---|
-| `runtime/autopilot-service/index.js` | Runtime service — cases, plans, policy, approvals, KPIs, evidence (~7,000 LOC) |
-| `runtime/autopilot-service/slack.js` | Slack Socket Mode integration |
-| `runtime/autopilot-service/*.test.js` | 587 tests across 16 files |
-| `openclaw/` | OpenClaw gateway config + 11 agent instruction sets |
-| `hermes/`, `nemoclaw/` | Alternative runtime profiles |
-| `policies/policy.yaml` | Action allowlists, approvers, protected targets, thresholds |
-| `policies/toolmap.yaml` | MCP tool mappings (9 action tools + verification/rollback) |
-| `playbooks/` | 7 incident-response playbooks |
-| `docs/` | Full documentation set |
-
-## Further reading
-
-- [RUNTIME_API.md](RUNTIME_API.md) — REST API reference
-- [MCP_INTEGRATION.md](MCP_INTEGRATION.md) — the 55 MCP tools and how agents call them
-- [AGENT_COMMUNICATION.md](AGENT_COMMUNICATION.md) — agent ↔ runtime message flow
-- [AGENT_CONFIGURATION.md](AGENT_CONFIGURATION.md) — agent files, personas, customization
-- [POLICY_AND_APPROVALS.md](POLICY_AND_APPROVALS.md) — policy engine and approval workflow
-- [EVIDENCE_PACK_SCHEMA.md](EVIDENCE_PACK_SCHEMA.md) — evidence pack format
-- [OBSERVABILITY_EXPORT.md](OBSERVABILITY_EXPORT.md) — Prometheus metrics and SOC KPIs
+Postgres tables: `users`, `api_tokens`, `settings` (one JSON row per section), `agents`, `skills` (custom and edited skills), `workflows`, `alerts`, `cases`, `timeline`, `findings`, `comments`, `actions`, `runs`, `spans`, `audit_log`, `reports`, `detections`, `playground_sessions`, `eval_suites`, `eval_runs`. The schema is created on boot. Built-in agents, workflows and eval suites are added if missing and upgraded field by field on boot; fields an admin customized are kept.

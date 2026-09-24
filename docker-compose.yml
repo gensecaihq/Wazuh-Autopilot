@@ -1,102 +1,77 @@
-# =============================================================================
-# Wazuh Autopilot - Docker Compose Configuration
-# =============================================================================
-# Development and production deployment configuration
-# =============================================================================
+# Wazuh Autopilot — agentic SOC platform (Strands Agents)
+#   cp .env.example .env   # set secrets, Wazuh MCP URL/key and model provider
+#   docker compose up -d
+# Optional local inference: --profile ollama | --profile vllm (NVIDIA GPU) | --profile litellm
+# Demo with a simulated Wazuh fleet: docker compose -f docker-compose.yml -f docker-compose.demo.yml up -d
+
+name: wazuh-autopilot
 
 services:
-  # ---------------------------------------------------------------------------
-  # Autopilot Runtime Service
-  # ---------------------------------------------------------------------------
   autopilot:
-    build:
-      context: ./runtime/autopilot-service
-      dockerfile: Dockerfile
-    container_name: wazuh-autopilot
+    build: .
+    image: wazuh-autopilot:3.0.0
     restart: unless-stopped
-
-    # Resource limits (prevent a leak/alert-flood from OOM-ing the host).
-    # `mem_limit`/`cpus`/`pids_limit` apply to `docker compose up` (non-swarm).
-    mem_limit: ${AUTOPILOT_MEM_LIMIT:-512m}
-    cpus: ${AUTOPILOT_CPUS:-1.0}
-    pids_limit: 256
-
-    # Security: Read-only root filesystem
-    read_only: true
-
-    # Security: Drop all capabilities
-    cap_drop:
-      - ALL
-
-    # Security: No privilege escalation
-    security_opt:
-      - no-new-privileges:true
-
-    # Resolve host.docker.internal on Linux (already works on Docker Desktop)
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
-
-    ports:
-      - "127.0.0.1:${RUNTIME_PORT:-9090}:${RUNTIME_PORT:-9090}"
-
-    # Pass all environment variables from .env file
-    env_file:
-      - path: .env
-        required: false
-
+    env_file: [.env]
     environment:
-      # Overrides that must always be set for Docker (regardless of .env)
-      - METRICS_HOST=0.0.0.0
-      - METRICS_ENABLED=true
-      - LOG_FORMAT=json
-      - OPENCLAW_GATEWAY_URL=${OPENCLAW_GATEWAY_URL:-http://host.docker.internal:18789}
-      - OPENCLAW_TOKEN=${OPENCLAW_TOKEN:-}
-      # Run mode. The image defaults to "bootstrap"; for a real production deploy
-      # set AUTOPILOT_MODE=production (in .env) so the runtime fails fast on missing
-      # auth tokens, placeholder policy values, and wildcard CORS instead of starting
-      # insecure. See validateStartup() in index.js.
-      - AUTOPILOT_MODE=${AUTOPILOT_MODE:-bootstrap}
-
+      DATABASE_URL: postgresql+psycopg://autopilot:${POSTGRES_PASSWORD:-}@postgres:5432/autopilot
+    ports:
+      - "${AUTOPILOT_BIND:-127.0.0.1}:${AUTOPILOT_PORT:-8480}:8080"
     volumes:
-      # Persistent data
-      - autopilot-data:/var/lib/wazuh-autopilot
+      - autopilot-data:/data
+    depends_on:
+      postgres:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits: {cpus: "2.0", memory: 2g}
 
-      # Configuration (read-only)
-      - ./policies:/etc/wazuh-autopilot/policies:ro
-
-      # Temp filesystem for runtime
-      - type: tmpfs
-        target: /tmp
-        tmpfs:
-          size: 100M
-
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: autopilot
+      POSTGRES_USER: autopilot
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD", "node", "-e", "const h=require('http');h.get('http://localhost:'+(process.env.RUNTIME_PORT||9090)+'/health',r=>{process.exit(r.statusCode===200?0:1)}).on('error',()=>process.exit(1))"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 10s
+      test: ["CMD-SHELL", "pg_isready -U autopilot -d autopilot"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
 
-    logging:
-      driver: json-file
-      options:
-        max-size: "10m"
-        max-file: "3"
+  # --- optional local inference --------------------------------------------
+  ollama:
+    image: ollama/ollama:latest
+    profiles: [ollama]
+    restart: unless-stopped
+    volumes: [ollama-data:/root/.ollama]
 
-    networks:
-      - autopilot-net
+  vllm:
+    image: vllm/vllm-openai:latest
+    profiles: [vllm]
+    restart: unless-stopped
+    command: ["--model", "${VLLM_MODEL:-Qwen/Qwen3-32B}", "--enable-auto-tool-choice", "--tool-call-parser", "hermes",
+              "--max-model-len", "32768"]
+    environment:
+      HUGGING_FACE_HUB_TOKEN: ${HUGGING_FACE_HUB_TOKEN:-}
+    volumes: [hf-cache:/root/.cache/huggingface]
+    ipc: host
+    deploy:
+      resources:
+        reservations:
+          devices: [{driver: nvidia, count: all, capabilities: [gpu]}]
 
-# -----------------------------------------------------------------------------
-# Networks
-# -----------------------------------------------------------------------------
-networks:
-  autopilot-net:
-    driver: bridge
-    internal: false
+  litellm:
+    image: ghcr.io/berriai/litellm:main-stable
+    profiles: [litellm]
+    restart: unless-stopped
+    command: ["--config", "/app/config.yaml", "--port", "4000"]
+    env_file: [.env]
+    volumes: [./litellm/config.yaml:/app/config.yaml:ro]
 
-# -----------------------------------------------------------------------------
-# Volumes
-# -----------------------------------------------------------------------------
 volumes:
   autopilot-data:
-    driver: local
+  postgres-data:
+  ollama-data:
+  hf-cache:

@@ -1,304 +1,43 @@
-# Wazuh Autopilot - Quick Start Guide
+# Quick Start
 
-Get Wazuh Autopilot running in under 15 minutes.
-
-## Prerequisites
-
-- **Ubuntu 22.04 or 24.04** (other Linux distros may work)
-- **Node.js 20+** for runtime service
-- **Wazuh Manager** installed and running
-- **Wazuh MCP Server** deployed - [gensecaihq/Wazuh-MCP-Server](https://github.com/gensecaihq/Wazuh-MCP-Server)
-- **OpenClaw** for agent orchestration - [openclaw/openclaw](https://github.com/openclaw/openclaw)
-- **Root access** for installation
-
-> **Alternative agent runtimes**: this guide covers the default OpenClaw pipeline. To run the same Autopilot on Nous Research's Hermes Agent (analyst-assist / chat-ops) see [HERMES_DEPLOYMENT.md](HERMES_DEPLOYMENT.md); for a governed NVIDIA-stack deployment inside a NemoClaw/OpenShell sandbox (Nemotron models only) see [NEMOCLAW_DEPLOYMENT.md](NEMOCLAW_DEPLOYMENT.md).
-
-## Step 1: Clone the Repository
+## Demo (5 minutes, no Wazuh or LLM needed)
 
 ```bash
-git clone https://github.com/gensecaihq/Wazuh-Autopilot.git
-cd Wazuh-Autopilot
+git clone https://github.com/gensecaihq/Wazuh-Autopilot.git && cd Wazuh-Autopilot
+docker compose -f docker-compose.yml -f docker-compose.demo.yml up -d --build
 ```
 
-## Step 2: Run the Installer
+Open <http://localhost:8480> and sign in as `admin@autopilot.local` / `Autopilot!2026`. Other demo users (same password): `maya.chen@autopilot.local` (SOC Manager), `sam.okafor@autopilot.local` (Responder), `lena.ivanova@autopilot.local` (Analyst), `raj.patel@autopilot.local` (Auditor).
 
-### Standard Installation
+What's running:
+
+- **autopilot**: the platform (API, UI, swarm) on port 8480.
+- **postgres**: platform database.
+- **mock-wazuh**: a simulated Wazuh MCP Server with 14 agents, a live alert stream, and two planted compromises (a miner on `k8s-node-2`, a beacon on `fin-ws-17`).
+
+The demo uses the scripted `demo` model. Each agent follows a fixed procedure but makes real tool calls, so cases, findings, action proposals, execution and verification all happen for real. Things to try:
+
+1. **Command Center**: live detections and swarm activity.
+2. **Incidents**: open a new one and read the timeline, findings and ATT&CK mapping the agents produced.
+3. **Approvals**: approve a proposed `block_ip`. The platform executes it on the mock fleet and verifies it with `wazuh_check_blocked_ip`.
+4. **Runs & Traces**: the waterfall of every agent, model call, tool call and handoff.
+5. **Playground**: chat with one agent in dry-run mode and watch its tool calls stream.
+6. **Settings → Models**: switch to a real provider (Bedrock, Anthropic, OpenAI-compatible, NVIDIA NIM, vLLM, LiteLLM, Ollama) to see real reasoning against the same fleet.
+
+Stop it with `docker compose -f docker-compose.yml -f docker-compose.demo.yml down` (add `-v` to wipe data).
+
+## First production install
+
+Prerequisites: Docker with Compose v2.24+, a [Wazuh MCP Server](https://github.com/gensecaihq/Wazuh-MCP-Server) v4.3.0 reachable from the host, and a model provider.
 
 ```bash
-sudo ./install/install.sh
+cp .env.example .env
+# set POSTGRES_PASSWORD, AUTOPILOT_SECRET_KEY, WAZUH_MCP_URL, WAZUH_MCP_API_KEY, MODEL_PROVIDER/MODEL_ID
+docker compose up -d --build
 ```
 
-### Air-Gapped / Bootstrap (No Tailscale)
+Leave `AUTOPILOT_ADMIN_PASSWORD` empty and the first visit opens the setup wizard: organization → administrator → Wazuh MCP (with connection test) → model (with test) → autonomy level → review.
 
-For environments without internet access or during evaluation:
+Start with the autonomy level at **recommend** (humans approve and execute everything), watch a few days of proposals, then relax specific action types in **Autonomy Policy**. For active response, the MCP key needs `wazuh:write` scope. See [MCP_INTEGRATION.md](MCP_INTEGRATION.md).
 
-```bash
-sudo ./install/install.sh --mode bootstrap
-# or equivalently:
-sudo ./install/install.sh --skip-tailscale
-```
-
-### MCP Server Only
-
-If you already have OpenClaw running and only need the MCP Server:
-
-```bash
-sudo ./install/install.sh --mode mcp-only
-```
-
-See the [Air-Gapped Deployment Guide](AIR_GAPPED_DEPLOYMENT.md) for Ollama-only setups.
-
-## Step 3: Configure the Service
-
-Edit the configuration file:
-
-```bash
-sudo nano /etc/wazuh-autopilot/.env
-```
-
-**Required — LLM API Keys:**
-
-At minimum, set the API key for your primary LLM provider. **We recommend OpenRouter** as the safest single-key option — it provides access to Claude, GPT-4o, Gemini, and 300+ models with no risk of provider-level account bans.
-
-```bash
-# Option 1: OpenRouter (recommended — single key, no ban risk)
-OPENROUTER_API_KEY=sk-or-...     # https://openrouter.ai/
-
-# Option 2: Direct provider API keys (pay-per-token only!)
-ANTHROPIC_API_KEY=sk-ant-...     # https://console.anthropic.com/
-OPENAI_API_KEY=sk-...            # https://platform.openai.com/
-GROQ_API_KEY=gsk-...             # https://console.groq.com/
-```
-
-> **Warning**: Do NOT use Claude Pro/Max or Google AI Ultra **subscription OAuth tokens**. Anthropic and Google have banned subscription OAuth in third-party agent tools — your account will be suspended. Always use **pay-per-token API keys** from the provider's developer console, or use OpenRouter which acts as a safe billing proxy. See the [Provider Policy Notice](../README.md#provider-policy-notice) in the README.
-
-**Important — OpenRouter model names:** If you're using OpenRouter, you must also update `~/.openclaw/openclaw.json` to use the `openrouter/` prefix on all model names. OpenClaw uses the prefix before the first `/` to determine the provider — without it, the system tries the direct provider API (which requires that provider's API key).
-
-```json
-{
-  "primary": "openrouter/anthropic/claude-sonnet-4-5",
-  "fallbacks": ["openrouter/openai/gpt-4o", "openrouter/groq/llama-3.3-70b-versatile"]
-}
-```
-
-The installer handles this automatically when you select "OpenRouter" during LLM provider setup. If you installed manually or with an older version, update the model names in your `openclaw.json` by hand.
-
-**Required — MCP Server Connection:**
-
-```bash
-# MCP Server Connection
-# Replace with your actual MCP server URL
-MCP_URL=https://your-mcp-server:3000
-
-# MCP Authentication Token
-# Get this from your MCP server configuration
-AUTOPILOT_MCP_AUTH=your-mcp-auth-token
-```
-
-**Optional Slack integration:**
-
-```bash
-# Slack tokens for notifications and approvals
-# Get these from your Slack app configuration
-# See: docs/SLACK_SOCKET_MODE.md
-SLACK_APP_TOKEN=xapp-1-your-app-token
-SLACK_BOT_TOKEN=xoxb-your-bot-token
-```
-
-## Step 4: Configure Slack Approvers (Optional)
-
-Slack is optional. Without it, approvals work via the REST API (`POST /api/plans/:id/approve`).
-
-If you want Slack notifications and interactive approval buttons, edit the policy file:
-
-```bash
-sudo nano /etc/wazuh-autopilot/policies/policy.yaml
-```
-
-Replace the placeholder values:
-- `<SLACK_WORKSPACE_ID>` - Your Slack workspace ID
-- `<SLACK_CHANNEL_ALERTS>` - Channel ID for security alerts
-- `<SLACK_CHANNEL_APPROVALS>` - Channel ID for approval requests
-- `<SLACK_USER_*>` - Slack user IDs for your security team
-
-See the comments in the file for instructions on finding these IDs.
-
-## Step 5: Refresh Model Catalog
-
-This step ensures OpenClaw knows your models support tool calling (`web_fetch`). Without it, agents using OpenRouter may output tool calls as plain text instead of invoking them.
-
-```bash
-openclaw models scan
-```
-
-If `openclaw models scan` is not available on your version, upgrade OpenClaw first:
-```bash
-curl -fsSL https://openclaw.ai/install.sh | sh
-openclaw models scan
-```
-
-## Step 6: Start the Service
-
-```bash
-# Start the runtime service
-sudo systemctl start wazuh-autopilot
-
-# Enable on boot
-sudo systemctl enable wazuh-autopilot
-
-# Check status
-sudo systemctl status wazuh-autopilot
-```
-
-## Step 7: Verify Installation
-
-### Run health check:
-
-```bash
-./scripts/health-check.sh
-```
-
-### Check health endpoint (default port 9090, configurable via RUNTIME_PORT):
-
-```bash
-curl http://127.0.0.1:9090/health
-```
-
-Expected response:
-```json
-{
-  "status": "healthy",
-  "version": "1.0.0",
-  "mode": "bootstrap"
-}
-```
-
-### Run diagnostics:
-
-```bash
-./scripts/health-check.sh --quick
-```
-
-## Step 8: Test Alert Ingestion
-
-Send a test alert to verify triage works:
-
-```bash
-curl -X POST http://127.0.0.1:9090/api/alerts \
-  -H "Content-Type: application/json" \
-  -d '{
-    "alert_id": "test-001",
-    "rule": {
-      "id": "5712",
-      "level": 10,
-      "description": "Test alert - SSH brute force"
-    },
-    "agent": {
-      "id": "001",
-      "name": "test-server",
-      "ip": "10.0.1.50"
-    },
-    "data": {
-      "srcip": "192.168.1.100"
-    }
-  }'
-```
-
-Expected response (case_id is a hash-based identifier):
-```json
-{
-  "case_id": "CASE-20260217-6a82c1f38bed",
-  "status": "created",
-  "severity": "high",
-  "entities_extracted": 2
-}
-```
-
-> If OpenClaw Gateway is running, the runtime will also dispatch a webhook to `/webhook/wazuh-alert` to trigger the Triage Agent automatically.
-
-### View the created case:
-
-```bash
-curl http://127.0.0.1:9090/api/cases
-```
-
-## Step 9: Test Alert Grouping
-
-Send a second alert with the same source IP — it should be grouped into the same case:
-
-```bash
-curl -X POST http://127.0.0.1:9090/api/alerts \
-  -H "Content-Type: application/json" \
-  -d '{
-    "alert_id": "test-002",
-    "rule": {
-      "id": "5712",
-      "level": 12,
-      "description": "Test alert - SSH brute force continued"
-    },
-    "agent": {
-      "id": "001",
-      "name": "test-server",
-      "ip": "10.0.1.50"
-    },
-    "data": {
-      "srcip": "192.168.1.100"
-    }
-  }'
-```
-
-Expected response (note `status: "updated"` and `grouped_into`):
-```json
-{
-  "case_id": "CASE-20260217-6a82c1f38bed",
-  "status": "updated",
-  "severity": "high",
-  "entities_extracted": 2,
-  "grouped_into": "CASE-20260217-6a82c1f38bed"
-}
-```
-
-## Step 10: Submit Feedback (Optional)
-
-Mark a case as a false positive or true positive:
-
-```bash
-curl -X POST http://127.0.0.1:9090/api/cases/CASE-20260217-6a82c1f38bed/feedback \
-  -H "Content-Type: application/json" \
-  -d '{
-    "verdict": "true_positive",
-    "reason": "Confirmed SSH brute force attack",
-    "user_id": "analyst-1"
-  }'
-```
-
-## What's Next?
-
-1. **Configure OpenClaw** - Load the agent configurations into your OpenClaw instance
-2. **Verify agent pipeline** - Update case status to `triaged` and check that the Correlation Agent is triggered via webhook
-3. **Enable IP enrichment** - Set `ENRICHMENT_ENABLED=true` and `ABUSEIPDB_API_KEY` in `/etc/wazuh-autopilot/.env` for automatic threat intelligence enrichment
-4. **Set up Slack** - See [SLACK_SOCKET_MODE.md](SLACK_SOCKET_MODE.md) for full integration
-5. **Production mode** - See [TAILSCALE_MANDATORY.md](TAILSCALE_MANDATORY.md) for zero-trust networking
-6. **Customize policies** - Review `policies/policy.yaml` for your environment (inline enforcement is active)
-7. **Review playbooks** - Understand response workflows in `playbooks/`
-
-## Troubleshooting
-
-### Service won't start
-
-Check logs:
-```bash
-sudo journalctl -u wazuh-autopilot -f
-```
-
-### MCP connection fails
-
-1. Verify MCP_URL is correct and reachable
-2. Check AUTOPILOT_MCP_AUTH token is valid
-3. Test connectivity: `curl -v https://your-mcp-server:3000/health`
-
-### Placeholder validation error
-
-If you see "Policy contains placeholder values", edit `/etc/wazuh-autopilot/policies/policy.yaml` and replace all `<PLACEHOLDER>` values with real configuration.
-
-See [TROUBLESHOOTING.md](TROUBLESHOOTING.md) for more help.
+Next: [DEPLOYMENT.md](DEPLOYMENT.md) for ingestion, TLS, backups and operations.

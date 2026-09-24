@@ -4,45 +4,21 @@
 
 | Version | Supported          |
 | ------- | ------------------ |
-| 1.0.x   | :white_check_mark: |
-| < 1.0   | :x:                |
+| 3.0.x   | :white_check_mark: |
+| < 3.0 (Node runtime line) | :x: |
 
 ## Security Model
 
-Wazuh Autopilot implements a defense-in-depth security model:
+Wazuh Autopilot is a single platform (FastAPI backend, Strands agent swarm, web UI) that reaches Wazuh only through the [Wazuh MCP Server](https://github.com/gensecaihq/Wazuh-MCP-Server). Controls, from the agents outward:
 
-### Autonomy Levels
-
-| Level | Description | Actions Allowed |
-|-------|-------------|-----------------|
-| `read-only` | Triage, Correlation, Investigation, Reporting, Vulnerability Management, Threat Intelligence, Threat Hunter, Detection Engineer | Query, search, read (auto-execute); specialists produce intelligence and proposals only |
-| `approval` | Response Planner, Policy Guard, Responder | Requires human approval before execution |
-
-### Key Security Controls
-
-1. **Responder Agent Disabled by Default**
-   - Requires explicit `AUTOPILOT_RESPONDER_ENABLED=true`
-   - Cannot be enabled without policy configuration
-
-2. **Two-Tier Human Approval**
-   - Approve (Tier 1) and Execute (Tier 2) are separate human steps
-   - Approver authorization via policy groups (`policy.yaml`): membership, risk-level clearance, per-action authorization
-   - Separation of duties enforced in code — the executor must differ from the approver
-
-3. **Policy Enforcement**
-   - Runtime-enforced gates on every plan: action allowlist, confidence threshold, protected-target deny-list, evidence requirement, time window, rate limits, idempotency
-   - Policy Guard agent adds a defense-in-depth 13-step LLM evaluation chain (first DENY wins)
-   - Fail-closed in production mode
-
-4. **Network Security**
-   - Production mode requires Tailscale
-   - Metrics bound to localhost by default
-   - No inbound connections required (Slack Socket Mode)
-
-5. **Data Protection**
-   - Secrets redacted from logs
-   - No credentials stored in configuration files
-   - Evidence packs exclude sensitive data
+1. **Agents never hold state-changing Wazuh tools.** Every `wazuh_*` tool except the `wazuh_check_*` verification tools is filtered out of the agents' MCP client, and a pre-tool hook (`ApprovalGate`) cancels any such call as a second layer. Agents call `propose_action`; only the platform executor calls MCP action tools.
+2. **Autonomy policy.** `observe`, `recommend` (human approves and executes), `supervised` (human approves, platform executes) or `autonomous` (eligible actions only). Per-action rules set confidence floors, hourly budgets and pinned modes; each agent has an autonomy cap; critical-risk actions always need a human. Uncertain policy state resolves to the more restrictive outcome. See [docs/AUTONOMY_AND_APPROVALS.md](docs/AUTONOMY_AND_APPROVALS.md).
+3. **Protected targets.** IPs/CIDRs, hosts, users and agent IDs on the protected list are refused outright, for humans and agents alike.
+4. **Separation of duties.** Optional two-person rule: the approver can't also execute. Every executed action is checked with the matching `wazuh_check_*` tool (which infers state from active-response alerts and inventory) and can be rolled back where Wazuh supports it.
+5. **RBAC.** Administrator, SOC Manager, Incident Responder, SOC Analyst and Auditor roles, with permissions checked server-side on every endpoint. Scoped API tokens (`apk_…`) are stored hashed.
+6. **Audit log.** Logins, failed logins, policy and settings changes, proposals, refusals, approvals, executions, verifications and rollbacks are all recorded with actor and IP.
+7. **Secrets.** API keys and webhook tokens are masked in API responses and never written to logs. Passwords use PBKDF2-SHA256.
+8. **Deployment defaults.** Non-root container user; the UI/API (8480) binds to `127.0.0.1` by default; `?token=` query credentials are redacted from access logs; alert content is treated as untrusted and wrapped as data in agent prompts (OWASP LLM01).
 
 ## Reporting a Vulnerability
 
@@ -70,47 +46,22 @@ Include the following information:
 
 ### Production Checklist
 
-- [ ] Enable Tailscale and use Tailnet URLs for MCP
-- [ ] Configure proper approver groups in `policies/policy.yaml`
-- [ ] Review and customize asset criticality patterns
-- [ ] Set `AUTOPILOT_MODE=production`
-- [ ] Ensure `AUTOPILOT_REQUIRE_TAILSCALE=true`
-- [ ] Bind metrics to localhost only
-- [ ] Configure Slack workspace/channel allowlists
-- [ ] Review rate limits for your environment
-- [ ] Set up log aggregation for audit trails
-
-### Network Security
-
-```bash
-# Verify Tailscale is running
-tailscale status
-
-# Run full health check
-./scripts/health-check.sh
-
-# Verify metrics are localhost-only (default port 9090, configurable via RUNTIME_PORT)
-curl http://127.0.0.1:9090/metrics  # Should work
-curl http://YOUR_IP:9090/metrics    # Should fail
-```
+- [ ] Set `POSTGRES_PASSWORD` and `AUTOPILOT_SECRET_KEY` in `.env`
+- [ ] Keep the MCP server on a private network (Tailscale, VPN); see [docs/TAILSCALE_MANDATORY.md](docs/TAILSCALE_MANDATORY.md)
+- [ ] Put a TLS reverse proxy in front of the UI; keep `AUTOPILOT_BIND` on `127.0.0.1` or a private IP
+- [ ] Start at `recommend` or `supervised` autonomy; review per-action rules and protected targets before enabling `autonomous`
+- [ ] Enable the two-person rule if your change process requires it
+- [ ] Give users the least-privileged role; use Auditor for read-only reviewers
+- [ ] Use an MCP key with `wazuh:write` only if you want active response
+- [ ] Export traces (OTLP) and back up Postgres
 
 ### Secrets Management
 
-Never commit secrets to the repository. Use environment variables:
-
-```bash
-# Use environment variables
-export AUTOPILOT_MCP_AUTH="your-token"
-export SLACK_APP_TOKEN="xapp-..."
-export SLACK_BOT_TOKEN="xoxb-..."
-
-# Or use a secrets manager
-# AWS Secrets Manager, HashiCorp Vault, etc.
-```
+Never commit secrets. Put them in `.env` (not committed) or inject them from a secrets manager (AWS Secrets Manager, Vault, …). On AWS compute prefer IAM roles over static keys for Bedrock.
 
 ## Security Updates
 
-Security updates are released as patch versions (e.g., 1.0.1, 1.0.2).
+Security updates are released as patch versions (e.g., 2.0.1, 2.0.2).
 
 Subscribe to releases to receive notifications:
 - Watch this repository with "Releases only"

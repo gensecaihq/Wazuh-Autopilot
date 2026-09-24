@@ -1,0 +1,192 @@
+@import "@fontsource/inter/300.css";
+@import "@fontsource/inter/400.css";
+@import "@fontsource/inter/500.css";
+@import "@fontsource/inter/600.css";
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Design tokens (space-separated RGB so Tailwind can apply alpha). */
+:root,
+:root[data-theme="dark"] {
+  --bg: 15 13 15;
+  --deep: 7 5 8;
+  --card: 20 18 20;
+  --card2: 27 26 27;
+  --line: 33 32 33;
+  --fg: 236 235 236;
+  --muted: 138 133 137;
+  --subtle: 92 88 91;
+  --accent: 255 129 39;
+  --danger: 239 68 68;
+  --success: 34 197 94;
+  --info: 79 107 255;
+  --warn: 234 179 8;
+  --glow: 255 129 39;
+  color-scheme: dark;
+}
+
+:root[data-theme="light"] {
+  --bg: 246 245 244;
+  --deep: 236 234 232;
+  --card: 255 255 255;
+  --card2: 248 247 246;
+  --line: 229 226 223;
+  --fg: 24 21 22;
+  --muted: 110 104 107;
+  --subtle: 160 154 157;
+  --accent: 240 110 20;
+  --danger: 220 38 38;
+  --success: 22 163 74;
+  --info: 59 87 235;
+  --warn: 202 138 4;
+  --glow: 255 150 70;
+  color-scheme: light;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  @apply bg-bg text-fg font-sans antialiased;
+  font-feature-settings: "cv11", "ss01";
+  font-weight: 400;
+}
+
+@layer components {
+  .card {
+    @apply rounded-xl border border-line bg-card;
+  }
+  .card-glow {
+    background-image: radial-gradient(ellipse 60% 70% at 45% 55%, rgb(var(--glow) / 0.1), transparent 70%);
+  }
+  .section-label {
+    @apply px-2 pb-1.5 pt-4 text-[11px] font-medium tracking-wide text-subtle;
+  }
+  .input {
+    @apply h-9 w-full rounded-lg border border-line bg-deep/60 px-3 text-sm text-fg placeholder:text-subtle outline-none transition focus:border-accent/60 focus:ring-2 focus:ring-accent/15;
+  }
+  .textarea {
+    @apply w-full rounded-lg border border-line bg-deep/60 px-3 py-2 text-sm text-fg placeholder:text-subtle outline-none transition focus:border-accent/60 focus:ring-2 focus:ring-accent/15;
+  }
+  .label {
+    @apply mb-1.5 block text-xs font-medium text-muted;
+  }
+  .btn {
+    @apply inline-flex h-9 items-center justify-center gap-2 whitespace-nowrap rounded-lg px-3.5 text-sm font-medium transition disabled:cursor-not-allowed disabled:opacity-50;
+  }
+  .btn-primary {
+    @apply btn bg-accent text-black hover:brightness-110;
+  }
+  .btn-secondary {
+    @apply btn border border-line bg-card2 text-fg hover:border-subtle/60;
+  }
+  .btn-ghost {
+    @apply btn text-muted hover:bg-card2 hover:text-fg;
+  }
+  .btn-danger {
+    @apply btn border border-danger/40 bg-danger/10 text-danger hover:bg-danger/20;
+  }
+  .btn-success {
+    @apply btn border border-success/40 bg-success/10 text-success hover:bg-success/20;
+  }
+  .btn-sm {
+    @apply h-7 px-2.5 text-xs;
+  }
+  .icon-btn {
+    @apply inline-flex h-9 w-9 items-center justify-center rounded-lg border border-line bg-card text-muted transition hover:text-fg;
+  }
+  .th {
+    @apply px-3 py-2.5 text-left text-xs font-normal text-muted;
+  }
+  .td {
+    @apply px-3 py-2.5 text-sm;
+  }
+  .chip {
+    @apply inline-flex items-center gap-1 rounded-md border border-line bg-card2 px-1.5 py-0.5 text-[11px] text-muted;
+  }
+  .kbd {
+    @apply rounded border border-line bg-card2 px-1.5 py-0.5 text-[10px] text-muted;
+  }
+}
+
+.scrollbar-thin::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background: rgb(var(--line));
+  border-radius: 8px;
+}
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-thumb {
+  background: rgb(var(--line));
+  border-radius: 10px;
+  border: 2px solid rgb(var(--bg));
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.skeleton {
+  background: linear-gradient(90deg, rgb(var(--card2)) 0, rgb(var(--line)) 50%, rgb(var(--card2)) 100%);
+  background-size: 800px 100%;
+  @apply animate-shimmer rounded-md;
+}
+
+.markdown {
+  @apply text-sm leading-relaxed text-fg/90;
+}
+.markdown h1 {
+  @apply mb-2 mt-4 text-lg font-medium;
+}
+.markdown h2 {
+  @apply mb-2 mt-4 text-base font-medium;
+}
+.markdown h3 {
+  @apply mb-1.5 mt-3 text-sm font-semibold;
+}
+.markdown p {
+  @apply my-2;
+}
+.markdown ul {
+  @apply my-2 list-disc pl-5;
+}
+.markdown ol {
+  @apply my-2 list-decimal pl-5;
+}
+.markdown li {
+  @apply my-0.5;
+}
+.markdown code {
+  @apply rounded bg-card2 px-1 py-0.5 font-mono text-[12px] text-accent;
+}
+.markdown pre {
+  @apply my-2 overflow-x-auto rounded-lg border border-line bg-deep p-3;
+}
+.markdown pre code {
+  @apply bg-transparent p-0 text-fg/90;
+}
+.markdown table {
+  @apply my-2 w-full border-collapse text-xs;
+}
+.markdown th,
+.markdown td {
+  @apply border border-line px-2 py-1 text-left;
+}
+.markdown a {
+  @apply text-accent underline-offset-2 hover:underline;
+}
+.markdown blockquote {
+  @apply my-2 border-l-2 border-accent/60 pl-3 text-muted;
+}
+.markdown hr {
+  @apply my-3 border-line;
+}

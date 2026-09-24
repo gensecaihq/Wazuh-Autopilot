@@ -1,131 +1,45 @@
-# Tailscale: Mandatory for Production
+# Tailscale for Production Networking
 
-Wazuh Autopilot uses Tailscale as the foundation for secure production deployments. This document explains why and how to set it up.
+Wazuh Autopilot talks to two things over the network: the Wazuh MCP Server and your model provider. For production we recommend putting Autopilot and the MCP server on a Tailscale tailnet so neither is exposed publicly.
 
-## Why Tailscale is Required
+The platform doesn't enforce Tailscale. It connects to whatever `mcp_url` you configure, so it's up to you to keep that path private: Tailscale, a corporate VPN or mTLS.
 
-### Security Benefits
+## Why Tailscale
 
-1. **Zero Trust Networking** - Every connection is authenticated and encrypted
-2. **No Public Exposure** - MCP server doesn't need public internet access
-3. **Identity-Based Access** - Connections are tied to machine identities
-4. **Audit Trail** - All connections are logged
-5. **ACL Control** - Fine-grained access control policies
+- **No public exposure.** The MCP server holds a key that can run active response. It should never be reachable from the internet.
+- **Identity-based access.** Connections are tied to machine identities and restricted by ACLs.
+- **Encrypted and logged.** WireGuard transport, connection audit logs.
+- **Simple addressing.** MagicDNS names like `wazuh-mcp.your-tailnet.ts.net`, and it works through NAT without firewall changes.
 
-### Operational Benefits
+## What to keep private
 
-1. **Simple DNS** - Access MCP via `mcp.your-tailnet.ts.net`
-2. **No Firewall Rules** - Works through NAT and firewalls
-3. **Automatic Key Rotation** - No manual certificate management
-4. **MagicDNS** - Automatic DNS for all devices
+| Endpoint | Default bind | Guidance |
+|---|---|---|
+| Autopilot UI/API | `127.0.0.1:8480` | Put a TLS reverse proxy in front, or expose only on the tailnet (`AUTOPILOT_BIND=<tailscale-ip>`) |
+| Wazuh MCP Server | `127.0.0.1:3000` | Tailnet only |
 
-## Bootstrap vs Production Mode
+## Setup
 
-### Bootstrap Mode (Testing/Evaluation)
-
-```bash
-AUTOPILOT_MODE=bootstrap
-```
-
-- Tailscale not required
-- MCP can be accessed via LAN or public URL
-- **Not recommended for production**
-- Doctor shows: `⚠️ READY (Bootstrap only)`
-
-### Production Mode (Required for Enterprise)
-
-```bash
-AUTOPILOT_MODE=production
-AUTOPILOT_REQUIRE_TAILSCALE=true
-```
-
-- Tailscale required on Autopilot host
-- MCP URL must be a Tailnet address
-- Full security posture
-- Doctor shows: `✅ READY (Production)`
-
-## Setup Instructions
-
-### Step 1: Install Tailscale on Autopilot Host
-
-```bash
-# The installer does this automatically, or manually:
-curl -fsSL https://tailscale.com/install.sh | sh
-
-# Authenticate with your Tailnet
-sudo tailscale up
-```
-
-Follow the authentication link to connect to your Tailnet.
-
-### Step 2: Install Tailscale on MCP Host
-
-On the machine running your Wazuh MCP Server:
+### 1. Install Tailscale on the Autopilot host and the MCP host
 
 ```bash
 curl -fsSL https://tailscale.com/install.sh | sh
 sudo tailscale up
 ```
 
-### Step 3: Note the Tailnet Addresses
-
-After both machines join the Tailnet:
+### 2. Tag the machines
 
 ```bash
-# On MCP host - get the Tailnet hostname
-tailscale status
-
-# Example output:
-# 100.64.0.1    mcp-server    youruser@  linux   -
+sudo tailscale up --advertise-tags=tag:autopilot   # Autopilot host
+sudo tailscale up --advertise-tags=tag:mcp         # MCP host
 ```
 
-Your MCP Tailnet URL will be something like:
-- `https://mcp-server.your-tailnet.ts.net:3000`
-- or `https://100.64.0.1:3000`
-
-### Step 4: Configure Autopilot for Production
-
-Update `/etc/wazuh-autopilot/.env`:
-
-```bash
-AUTOPILOT_MODE=production
-AUTOPILOT_REQUIRE_TAILSCALE=true
-MCP_URL=https://mcp-server.your-tailnet.ts.net:3000
-```
-
-### Step 5: Transition to Production (If Previously in Bootstrap)
-
-If you were running in bootstrap mode:
-
-1. Update `/etc/wazuh-autopilot/.env`:
-   ```bash
-   AUTOPILOT_MODE=production
-   AUTOPILOT_REQUIRE_TAILSCALE=true
-   MCP_URL=https://mcp-server.your-tailnet.ts.net:3000
-   ```
-
-2. Restart the service:
-   ```bash
-   sudo systemctl restart wazuh-autopilot
-   ```
-
-3. Verify with doctor:
-   ```bash
-   ./install/doctor.sh
-   ```
-
-## Tailscale ACLs (Optional but Recommended)
-
-For additional security, configure Tailscale ACLs to restrict access:
+### 3. Restrict with ACLs
 
 ```json
 {
   "acls": [
-    {
-      "action": "accept",
-      "src": ["tag:autopilot"],
-      "dst": ["tag:mcp:3000"]
-    }
+    {"action": "accept", "src": ["tag:autopilot"], "dst": ["tag:mcp:3000"]}
   ],
   "tagOwners": {
     "tag:autopilot": ["autogroup:admin"],
@@ -134,111 +48,32 @@ For additional security, configure Tailscale ACLs to restrict access:
 }
 ```
 
-Tag your machines:
+### 4. Point Autopilot at the tailnet address
+
+Set **Settings → Wazuh MCP → MCP server base URL** (or `WAZUH_MCP_URL` in `.env` before first boot) to the MagicDNS name, e.g. `https://wazuh-mcp.your-tailnet.ts.net:3000`, then click **Test connection**.
+
+## Verifying
 
 ```bash
-# On Autopilot host
-sudo tailscale up --advertise-tags=tag:autopilot
-
-# On MCP host
-sudo tailscale up --advertise-tags=tag:mcp
+tailscale status                                            # both machines online
+curl https://wazuh-mcp.your-tailnet.ts.net:3000/health      # from the Autopilot host
 ```
 
-## Verifying Tailscale Connectivity
-
-### Check Tailscale Status
-
-```bash
-tailscale status
-```
-
-Should show both machines online.
-
-### Test MCP Connectivity
-
-```bash
-# From Autopilot host
-curl https://mcp-server.your-tailnet.ts.net:3000/health
-```
-
-### Run Doctor
-
-```bash
-./install/doctor.sh
-```
-
-Look for:
-- `✓ Tailscale running`
-- `✓ URL is a Tailnet URL`
-- `✓ MCP health check passed`
+In Autopilot, **Agent Health** shows the Wazuh MCP component as healthy with the number of read tools available to agents.
 
 ## Troubleshooting
 
-### "Tailscale not running"
+| Symptom | Check |
+|---|---|
+| MCP "down" in Agent Health | `tailscale status` on both hosts; MCP listening (`ss -tlnp \| grep 3000`); ACL allows `tag:autopilot → tag:mcp:3000` |
+| Container can't resolve MagicDNS names | Use the tailnet IP, or run Tailscale on the Docker host with MagicDNS enabled for containers |
 
-```bash
-sudo tailscale up
-```
+## Alternatives
 
-### "URL is not a Tailnet URL"
-
-Update `MCP_URL` in `/etc/wazuh-autopilot/.env` to use the Tailnet address.
-
-### "Cannot connect to MCP"
-
-1. Verify MCP host is on the same Tailnet:
-   ```bash
-   tailscale status
-   ```
-
-2. Check MCP is listening:
-   ```bash
-   # On MCP host
-   ss -tlnp | grep 3000
-   ```
-
-3. Check Tailscale ACLs allow the connection
-
-### "Production mode requires Tailnet MCP URL"
-
-You're trying to use production mode with a non-Tailnet URL. Either:
-- Change `AUTOPILOT_MODE=bootstrap` for testing
-- Or update `MCP_URL` to a Tailnet address
-
-## Enterprise Considerations
-
-### Multiple Environments
-
-For dev/staging/prod environments, use:
-- Different Tailnets, or
-- Tailscale ACLs to segment access
-
-### High Availability
-
-Tailscale supports:
-- Multiple relay servers (DERP)
-- Subnet routing for HA setups
-- Exit nodes for centralized egress
-
-### Compliance
-
-Tailscale provides:
-- SOC 2 Type II certified
-- Audit logs for all connections
-- Admin console for visibility
-
-## Alternatives (Not Recommended)
-
-If you cannot use Tailscale:
-
-1. **VPN** - Configure MCP behind your corporate VPN
-2. **mTLS** - Set up mutual TLS between Autopilot and MCP
-3. **SSH Tunnel** - Forward MCP port over SSH
-
-These alternatives require manual configuration and are not officially supported.
+A corporate VPN, mTLS between Autopilot and the MCP server, or an SSH tunnel all work too. Whatever you pick, the MCP server stays off the public internet.
 
 ## Reference
 
-- [Tailscale Documentation](https://tailscale.com/kb/)
+- [Tailscale documentation](https://tailscale.com/kb/)
 - [Tailscale ACLs](https://tailscale.com/kb/1018/acls/)
-- [Enterprise Features](https://tailscale.com/enterprise/)
+- [DEPLOYMENT.md](DEPLOYMENT.md)

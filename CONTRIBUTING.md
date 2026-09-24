@@ -39,12 +39,8 @@ When reporting bugs, please include:
 
 4. **Test your changes**
    ```bash
-   # Run health check
-   ./scripts/health-check.sh --quick
-
-   # Run tests
-   cd runtime/autopilot-service
-   npm test
+   cd backend && pytest -q      # backend suite (41 tests)
+   cd ../ui && npm run build    # type-checks and builds the UI
    ```
 
 5. **Commit with a clear message**
@@ -72,106 +68,59 @@ Example:
 ```
 feat: Add Teams integration support
 
-- Add teams agent workspace (AGENTS.md, IDENTITY.md, TOOLS.md, MEMORY.md)
-- Update policy.yaml with Teams channel allowlists
-- Add documentation for Teams setup
+- Add Teams webhook to notification settings
+- Add tests for the notifier
+- Document Teams setup
 ```
 
 ## Development Setup
 
 ### Prerequisites
 
-- Ubuntu 22.04 or 24.04 (or macOS for development)
-- Node.js 20+
-- Docker (for testing OpenClaw integration)
+- Python 3.12, Node.js 22, Docker (for the demo stack)
 
 ### Local Development
 
 ```bash
-# Clone the repository
 git clone https://github.com/gensecaihq/Wazuh-Autopilot.git
 cd Wazuh-Autopilot
 
-# Install (skip Tailscale for dev/testing)
-sudo ./install/install.sh --skip-tailscale
+# backend
+cd backend && python3.12 -m venv .venv && . .venv/bin/activate
+pip install -r requirements-dev.txt
+pytest -q
+AUTOPILOT_DATA_DIR=./data AUTOPILOT_DEMO_MODE=true uvicorn app.main:app --port 8480
 
-# Run tests
-cd runtime/autopilot-service
-npm test
+# UI (proxies /api to :8480)
+cd ../ui && npm ci && npm run dev
 
-# Run the service locally
-node index.js
+# full demo stack (mock Wazuh MCP server, Postgres, seeded history)
+docker compose -f docker-compose.yml -f docker-compose.demo.yml up -d --build
 ```
 
 ### Testing
 
-- All new features should include tests
-- Run `npm test` before submitting PRs
-- Run health check: `./scripts/health-check.sh --quick`
+- New features need tests; every bug fix needs a regression test
+- `cd backend && pytest -q` and `cd ui && npm run build` must pass before a PR
+- Skills must cite Wazuh rule IDs as `rule N` / `rules N, M`, only IDs that exist in the official ruleset. After adding one, regenerate `backend/tests/data/wazuh_rule_refs.json` with `backend/scripts/build_wazuh_rule_refs.py <ruleset/rules dir>`; `test_wazuh_skills.py` checks IDs, stated levels and tool grants
 
 ## Project Structure
 
 ```
 Wazuh-Autopilot/
-├── openclaw/
-│   ├── openclaw.json           # Gateway & model configuration
-│   └── agents/                 # 11 SOC agents (AGENTS.md, IDENTITY.md, TOOLS.md, MEMORY.md)
-├── hermes/                     # Hermes Agent runtime profile (Nous Research)
-├── nemoclaw/                   # NemoClaw profile — NVIDIA stack only (Nemotron/NIM/OpenShell)
-├── policies/                   # Security policies and tool mappings
-├── playbooks/                  # Incident response playbooks (7 playbooks)
-├── install/                    # Installation scripts and env template
-├── scripts/                    # Health check and operational scripts
-├── runtime/autopilot-service/  # Node.js runtime service
-├── docs/                       # Documentation
-└── README.md
+├── backend/            FastAPI + Strands swarm (agents, skills, policy, executor)
+│   ├── app/skills/     Agent Skills (SKILL.md), including the IR playbooks
+│   └── tests/          pytest suite
+├── ui/                 React + TypeScript + Tailwind
+├── mock-wazuh/         Simulated Wazuh MCP server for demos
+├── docs/               Documentation
+└── docker-compose.yml  Platform + Postgres (+ demo overlay)
 ```
 
-### Key Files
+## Adding Agents and Skills
 
-| File | Purpose |
-|------|---------|
-| `openclaw/openclaw.json` | OpenClaw gateway & agent configuration |
-| `policies/policy.yaml` | Security policy definitions |
-| `policies/toolmap.yaml` | MCP tool name mappings |
-| `install/install.sh` | Security-hardened installer |
-| `install/env.template` | Environment variable template |
-| `scripts/health-check.sh` | Full-stack health check |
-| `runtime/autopilot-service/index.js` | Core runtime service |
-
-## Adding New Agents
-
-1. Create a new agent workspace:
-   ```bash
-   # Create agent workspace directory
-   mkdir -p ~/.openclaw/wazuh-autopilot/agents/new-agent/
-
-   # Create required files:
-   # AGENTS.md  - Operating instructions and domain knowledge
-   # IDENTITY.md - Role, pipeline position, consumers
-   # TOOLS.md   - Tool usage guidance, query patterns
-   # MEMORY.md  - Seed template for accumulated learnings
-
-   # Copy shared files (SOUL.md and USER.md live in agents/_shared/):
-   cp ~/.openclaw/wazuh-autopilot/agents/_shared/SOUL.md ~/.openclaw/wazuh-autopilot/agents/new-agent/
-   cp ~/.openclaw/wazuh-autopilot/agents/_shared/USER.md ~/.openclaw/wazuh-autopilot/agents/new-agent/
-
-   # Register the agent in openclaw/openclaw.json agents.list array
-   ```
-
-2. Update documentation in `docs/` if needed
-
-3. Add the agent to the README.md agents table
-
-## Adding New Playbooks
-
-1. Create a markdown file in `playbooks/`:
-   - Follow the existing playbook structure
-   - Include MITRE ATT&CK mappings
-   - Document detection criteria
-   - Include response options
-
-2. Reference relevant Wazuh rules
+- **Agents:** add an entry to `backend/app/roster.py` (persona, skills, standards, allowed tools, handoffs). `test_roster_skills.py` checks that skills and tools exist and that no agent gets an active-response tool.
+- **Skills:** add `backend/app/skills/<id>/SKILL.md` (AgentSkills format; put long reference material in `references/`), then assign it to agents. Custom skills can also be created in the UI.
 
 ## Style Guidelines
 
@@ -181,12 +130,14 @@ Wazuh-Autopilot/
 - Include comments for complex configurations
 - Group related settings together
 
-### JavaScript
+### Python
 
-- Use ES6+ features
-- Include JSDoc comments for functions
-- Follow existing code patterns
-- Minimal external dependencies (only `@slack/bolt` and `@slack/web-api`)
+- Match the existing style (type hints, small modules, SQLAlchemy 2.0)
+- Keep agent-facing tool docstrings accurate: they're what the model sees
+
+### TypeScript
+
+- Strict mode; types in `ui/src/api/types.ts` mirror `docs/API.md`
 
 ### Shell Scripts
 

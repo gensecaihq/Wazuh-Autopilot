@@ -1,0 +1,31 @@
+# Demo overlay: simulated Wazuh fleet (mock MCP server), demo users, scripted demo model and 7 days of history.
+#   docker compose -f docker-compose.yml -f docker-compose.demo.yml up -d --build
+#   open http://localhost:8480   (admin@autopilot.local / Autopilot!2026)
+
+services:
+  autopilot:
+    env_file: !reset []
+    environment:
+      AUTOPILOT_DEMO_MODE: "true"
+      WAZUH_MCP_URL: http://mock-wazuh:3000
+      WAZUH_MCP_API_KEY: wazuh_demo_key
+      MODEL_PROVIDER: ${MODEL_PROVIDER:-demo}
+      MODEL_ID: ${MODEL_ID:-}
+      MODEL_BASE_URL: ${MODEL_BASE_URL:-}
+      MODEL_API_KEY: ${MODEL_API_KEY:-}
+      DATABASE_URL: postgresql+psycopg://autopilot:${POSTGRES_PASSWORD:-autopilot-demo}@postgres:5432/autopilot
+    depends_on:
+      mock-wazuh:
+        condition: service_healthy
+
+  postgres:
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-autopilot-demo}
+
+  mock-wazuh:
+    build: ./mock-wazuh
+    image: wazuh-autopilot-mock-wazuh:3.0.0
+    restart: unless-stopped
+    environment:
+      MOCK_API_KEY: wazuh_demo_key
+      MOCK_API_KEY_SCOPES: "wazuh:read wazuh:write"
