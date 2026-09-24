@@ -102,7 +102,7 @@ docker compose -f docker-compose.yml -f docker-compose.demo.yml up -d --build
 
 - New features need tests; every bug fix needs a regression test
 - `cd backend && pytest -q` and `cd ui && npm run build` must pass before a PR
-- Skills must cite Wazuh rule IDs as `rule N` / `rules N, M`, only IDs that exist in the official ruleset. After adding one, regenerate `backend/tests/data/wazuh_rule_refs.json` with `backend/scripts/build_wazuh_rule_refs.py <ruleset/rules dir>`; `test_wazuh_skills.py` checks IDs, stated levels and tool grants
+- Skills must cite Wazuh rule IDs as `rule N` / `rules N, M`, only IDs that exist in the official ruleset. After adding one, regenerate `backend/tests/fixtures/wazuh_rule_refs.json` with `backend/scripts/build_wazuh_rule_refs.py <ruleset/rules dir>`; `test_wazuh_skills.py` checks IDs, stated levels and tool grants
 
 ## Project Structure
 

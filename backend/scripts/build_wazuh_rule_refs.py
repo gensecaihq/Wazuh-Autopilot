@@ -1,4 +1,4 @@
-"""Regenerate tests/data/wazuh_rule_refs.json from an official Wazuh ruleset checkout.
+"""Regenerate tests/fixtures/wazuh_rule_refs.json from an official Wazuh ruleset checkout.
 
 The skills cite Wazuh rule IDs as `rule 5712` / `rules 5710, 5712`. This script collects every cited ID and
 records its official level and description, so tests can check the skills without network access.
@@ -15,7 +15,7 @@ import sys
 
 HERE = pathlib.Path(__file__).resolve().parent.parent
 SKILLS = HERE / "app" / "skills"
-OUT = HERE / "tests" / "data" / "wazuh_rule_refs.json"
+OUT = HERE / "tests" / "fixtures" / "wazuh_rule_refs.json"
 CITE = re.compile(r"(?<!custom )\brules?\s+(\d{3,6}(?:\s*(?:,|and|or|/)\s*\d{3,6})*)", re.I)
 
 

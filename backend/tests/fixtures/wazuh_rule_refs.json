@@ -1,0 +1,917 @@
+{
+ "ruleset": "wazuh v4.14.8",
+ "rules": {
+  "202": {
+   "level": 7,
+   "description": "Agent event queue is $(level) full."
+  },
+  "203": {
+   "level": 9,
+   "description": "Agent event queue is full. Events may be lost."
+  },
+  "204": {
+   "level": 12,
+   "description": "Agent event queue is flooded. Check the agent configuration."
+  },
+  "205": {
+   "level": 3,
+   "description": "Agent event queue is back to normal load."
+  },
+  "216": {
+   "level": 7,
+   "description": "Remote upgrade failed. Agent disconnected."
+  },
+  "220": {
+   "level": 7,
+   "description": "The agent could not restart due to a $(module) failure in the remote configuration"
+  },
+  "233": {
+   "level": 12,
+   "description": "The maximum limit of files monitored has been reached. At this moment there are $(file_count) files and the limit is $(file_limit). From this moment some events can be lost. You can modify this setting in the centralized configuration or locally in the agent."
+  },
+  "503": {
+   "level": 3,
+   "description": "Wazuh agent started."
+  },
+  "504": {
+   "level": 3,
+   "description": "Wazuh agent disconnected."
+  },
+  "505": {
+   "level": 3,
+   "description": "Wazuh agent removed."
+  },
+  "506": {
+   "level": 3,
+   "description": "Wazuh agent stopped."
+  },
+  "510": {
+   "level": 7,
+   "description": "Host-based anomaly detection event (rootcheck)."
+  },
+  "513": {
+   "level": 9,
+   "description": "Windows malware detected."
+  },
+  "518": {
+   "level": 9,
+   "description": "Windows Adware/Spyware application found."
+  },
+  "519": {
+   "level": 7,
+   "description": "System Audit: Vulnerable web application found."
+  },
+  "521": {
+   "level": 11,
+   "description": "Possible kernel level rootkit"
+  },
+  "531": {
+   "level": 7,
+   "description": "Partition usage reached 100% (disk space monitor)."
+  },
+  "533": {
+   "level": 7,
+   "description": "Listened ports status (netstat) changed (new port opened or closed)."
+  },
+  "550": {
+   "level": 7,
+   "description": "Integrity checksum changed."
+  },
+  "553": {
+   "level": 7,
+   "description": "File deleted."
+  },
+  "554": {
+   "level": 5,
+   "description": "File added to the system."
+  },
+  "560": {
+   "level": 7,
+   "description": "FIM real-time queue is full. Some real-time events may be lost."
+  },
+  "592": {
+   "level": 8,
+   "description": "Log file size reduced."
+  },
+  "593": {
+   "level": 9,
+   "description": "Microsoft Event log cleared."
+  },
+  "594": {
+   "level": 5,
+   "description": "Registry Key Integrity Checksum Changed"
+  },
+  "597": {
+   "level": 5,
+   "description": "Registry Key Entry Deleted."
+  },
+  "598": {
+   "level": 5,
+   "description": "Registry Key Entry Added to the System"
+  },
+  "601": {
+   "level": 3,
+   "description": "Host Blocked by firewall-drop Active Response"
+  },
+  "602": {
+   "level": 3,
+   "description": "Host Unblocked by firewall-drop Active Response"
+  },
+  "603": {
+   "level": 3,
+   "description": "Host Blocked by host-deny Active Response"
+  },
+  "651": {
+   "level": 3,
+   "description": "Host Blocked by firewall-drop Active Response"
+  },
+  "652": {
+   "level": 3,
+   "description": "Host Unblocked by firewall-drop Active Response"
+  },
+  "653": {
+   "level": 3,
+   "description": "Host Blocked by host-deny Active Response"
+  },
+  "657": {
+   "level": 3,
+   "description": "Active response: $(parameters.program) - $(command)"
+  },
+  "658": {
+   "level": 5,
+   "description": "Active response related to $(script) has been activated, but may not have an effect because the firewall is $(status)"
+  },
+  "750": {
+   "level": 5,
+   "description": "Registry Value Integrity Checksum Changed"
+  },
+  "751": {
+   "level": 5,
+   "description": "Registry Value Entry Deleted."
+  },
+  "752": {
+   "level": 5,
+   "description": "Registry Value Entry Added to the System"
+  },
+  "1003": {
+   "level": 13,
+   "description": "Non standard syslog message (size too large)."
+  },
+  "2501": {
+   "level": 5,
+   "description": "syslog: User authentication failure."
+  },
+  "2502": {
+   "level": 10,
+   "description": "syslog: User missed the password more than one time"
+  },
+  "2833": {
+   "level": 8,
+   "description": "Root's crontab entry changed."
+  },
+  "2902": {
+   "level": 7,
+   "description": "New dpkg (Debian Package) installed."
+  },
+  "2903": {
+   "level": 7,
+   "description": "Dpkg (Debian Package) removed."
+  },
+  "2932": {
+   "level": 7,
+   "description": "New Yum package installed."
+  },
+  "2933": {
+   "level": 7,
+   "description": "Yum package updated."
+  },
+  "2961": {
+   "level": 5,
+   "description": "User added to group sudo."
+  },
+  "5132": {
+   "level": 11,
+   "description": "Unsigned kernel module was loaded"
+  },
+  "5302": {
+   "level": 9,
+   "description": "User missed the password to change UID to root."
+  },
+  "5303": {
+   "level": 3,
+   "description": "User successfully changed UID to root."
+  },
+  "5401": {
+   "level": 5,
+   "description": "Failed attempt to run sudo."
+  },
+  "5402": {
+   "level": 3,
+   "description": "Successful sudo to ROOT executed."
+  },
+  "5403": {
+   "level": 4,
+   "description": "First time user executed sudo."
+  },
+  "5404": {
+   "level": 10,
+   "description": "Three failed attempts to run sudo"
+  },
+  "5405": {
+   "level": 5,
+   "description": "Unauthorized user attempted to use sudo."
+  },
+  "5501": {
+   "level": 3,
+   "description": "PAM: Login session opened."
+  },
+  "5502": {
+   "level": 3,
+   "description": "PAM: Login session closed."
+  },
+  "5503": {
+   "level": 5,
+   "description": "PAM: User login failed."
+  },
+  "5551": {
+   "level": 10,
+   "description": "PAM: Multiple failed logins in a small period of time."
+  },
+  "5710": {
+   "level": 5,
+   "description": "sshd: Attempt to login using a non-existent user"
+  },
+  "5712": {
+   "level": 10,
+   "description": "sshd: brute force trying to get access to the system. Non existent user."
+  },
+  "5715": {
+   "level": 3,
+   "description": "sshd: authentication success."
+  },
+  "5716": {
+   "level": 5,
+   "description": "sshd: authentication failed."
+  },
+  "5720": {
+   "level": 10,
+   "description": "sshd: Multiple authentication failures."
+  },
+  "5758": {
+   "level": 8,
+   "description": "Maximum authentication attempts exceeded."
+  },
+  "5760": {
+   "level": 5,
+   "description": "sshd: authentication failed."
+  },
+  "5763": {
+   "level": 10,
+   "description": "sshd: brute force trying to get access to the system. Authentication failed."
+  },
+  "5901": {
+   "level": 8,
+   "description": "New group added to the system."
+  },
+  "5902": {
+   "level": 8,
+   "description": "New user added to the system."
+  },
+  "5904": {
+   "level": 8,
+   "description": "Information from the user was changed."
+  },
+  "7703": {
+   "level": 5,
+   "description": "Microsoft Antimalware error event"
+  },
+  "19001": {
+   "level": 3,
+   "description": "SCA summary: $(sca.policy): Score: $(sca.score)"
+  },
+  "19002": {
+   "level": 4,
+   "description": "SCA summary: $(sca.policy): Score less than 90% ($(sca.score))"
+  },
+  "19003": {
+   "level": 5,
+   "description": "SCA summary: $(sca.policy): Score less than 80% ($(sca.score))"
+  },
+  "19004": {
+   "level": 7,
+   "description": "SCA summary: $(sca.policy): Score less than 50% ($(sca.score))"
+  },
+  "19005": {
+   "level": 9,
+   "description": "SCA summary: $(sca.policy): Score less than 30% ($(sca.score))"
+  },
+  "19007": {
+   "level": 7,
+   "description": "$(sca.policy): $(sca.check.title)"
+  },
+  "19008": {
+   "level": 3,
+   "description": "$(sca.policy): $(sca.check.title)"
+  },
+  "19009": {
+   "level": 3,
+   "description": "$(sca.policy): $(sca.check.title)"
+  },
+  "19010": {
+   "level": 3,
+   "description": "$(sca.policy): $(sca.check.title): Status changed from failed to passed"
+  },
+  "19011": {
+   "level": 9,
+   "description": "$(sca.policy): $(sca.check.title): Status changed from passed to failed"
+  },
+  "19012": {
+   "level": 5,
+   "description": "$(sca.policy): $(sca.check.title): Status changed from passed to 'not applicable'"
+  },
+  "19014": {
+   "level": 9,
+   "description": "$(sca.policy): $(sca.check.title): Status changed from 'not applicable' to failed"
+  },
+  "23502": {
+   "level": 3,
+   "description": "The $(vulnerability.cve) that affected $(vulnerability.package.name) was solved due to an update in the agent or feed."
+  },
+  "23503": {
+   "level": 5,
+   "description": "$(vulnerability.cve) affects $(vulnerability.package.name)"
+  },
+  "23504": {
+   "level": 7,
+   "description": "$(vulnerability.cve) affects $(vulnerability.package.name)"
+  },
+  "23505": {
+   "level": 10,
+   "description": "$(vulnerability.cve) affects $(vulnerability.package.name)"
+  },
+  "23506": {
+   "level": 13,
+   "description": "$(vulnerability.cve) affects $(vulnerability.package.name)"
+  },
+  "23507": {
+   "level": 3,
+   "description": "Vulnerabilities cleared"
+  },
+  "23508": {
+   "level": 3,
+   "description": "$(vulnerability.cve) affects $(vulnerability.package.name) (Missing information, CVE awaiting analysis)"
+  },
+  "31103": {
+   "level": 7,
+   "description": "SQL injection attempt."
+  },
+  "31106": {
+   "level": 6,
+   "description": "A web attack returned code 200 (success)."
+  },
+  "31151": {
+   "level": 10,
+   "description": "Multiple web server 400 error codes"
+  },
+  "31152": {
+   "level": 10,
+   "description": "Multiple SQL injection attempts from same"
+  },
+  "31510": {
+   "level": 8,
+   "description": "CMS (WordPress or Joomla) brute force attempt."
+  },
+  "40104": {
+   "level": 13,
+   "description": "Possible buffer overflow attempt."
+  },
+  "40111": {
+   "level": 10,
+   "description": "Multiple authentication failures."
+  },
+  "40112": {
+   "level": 12,
+   "description": "Multiple authentication failures followed"
+  },
+  "52502": {
+   "level": 8,
+   "description": "ClamAV: Virus detected"
+  },
+  "60105": {
+   "level": 5,
+   "description": "Windows Logon Failure"
+  },
+  "60106": {
+   "level": 3,
+   "description": "Windows Logon Success"
+  },
+  "60109": {
+   "level": 8,
+   "description": "User account enabled or created"
+  },
+  "60110": {
+   "level": 8,
+   "description": "User account changed"
+  },
+  "60112": {
+   "level": 8,
+   "description": "Windows Audit Policy changed"
+  },
+  "60115": {
+   "level": 9,
+   "description": "User account locked out (multiple login errors)"
+  },
+  "60117": {
+   "level": 9,
+   "description": "Windows audit log was cleared"
+  },
+  "60118": {
+   "level": 3,
+   "description": "Windows Workstation Logon Success"
+  },
+  "60122": {
+   "level": 5,
+   "description": "Logon Failure - Unknown user or bad password"
+  },
+  "60141": {
+   "level": 5,
+   "description": "Security Enabled Global Group Member Added $(win.eventdata.memberSid)"
+  },
+  "60144": {
+   "level": 5,
+   "description": "Security Enabled Local Group Member Added $(win.eventdata.memberSid)"
+  },
+  "60151": {
+   "level": 5,
+   "description": "Security Enabled Universal Group Member Added"
+  },
+  "60154": {
+   "level": 12,
+   "description": "Administrators Group Changed"
+  },
+  "60204": {
+   "level": 10,
+   "description": "Multiple Windows Logon Failures"
+  },
+  "60228": {
+   "level": 4,
+   "description": "A scheduled task was created"
+  },
+  "61138": {
+   "level": 5,
+   "description": "New Windows Service Created"
+  },
+  "62113": {
+   "level": 14,
+   "description": "Windows Defender: Antimalware engine found $(win.eventdata.severityName) malware or other potentially unwanted software"
+  },
+  "62122": {
+   "level": 12,
+   "description": "Windows Defender: Antimalware platform detected suspicious $(win.eventdata.detectionType) behaviour ($(win.eventdata.processName))"
+  },
+  "62123": {
+   "level": 12,
+   "description": "Windows Defender: Antimalware platform detected $(win.eventdata.severityName) potentially unwanted software ($(win.eventdata.processName))"
+  },
+  "62124": {
+   "level": 3,
+   "description": "Windows Defender: Antimalware platform performed an action to protect you from potentially unwanted software ($(win.eventdata.processName))"
+  },
+  "62125": {
+   "level": 8,
+   "description": "Windows Defender: Antimalware platform failed performing an action to protect you from potentially unwanted software ($(win.eventdata.processName))"
+  },
+  "62126": {
+   "level": 14,
+   "description": "Windows Defender: Antimalware platform encountered a critical error when attempting to perform an action over the  potentially unwanted software"
+  },
+  "63103": {
+   "level": 5,
+   "description": "The audit log was cleared"
+  },
+  "65053": {
+   "level": 3,
+   "description": "GCP firewall rule created."
+  },
+  "65054": {
+   "level": 3,
+   "description": "GCP firewall rule deleted."
+  },
+  "65056": {
+   "level": 3,
+   "description": "GCP logging bucket deleted."
+  },
+  "65057": {
+   "level": 3,
+   "description": "GCP logging sink deleted."
+  },
+  "65070": {
+   "level": 3,
+   "description": "GCP new service account created."
+  },
+  "67028": {
+   "level": 3,
+   "description": "Special privileges assigned to new logon."
+  },
+  "80202": {
+   "level": 3,
+   "description": "AWS Cloudtrail: $(aws.eventSource) - $(aws.eventName)."
+  },
+  "80203": {
+   "level": 4,
+   "description": "AWS Cloudtrail: $(aws.eventSource) - $(aws.eventName). Error: $(aws.errorCode)."
+  },
+  "80252": {
+   "level": 10,
+   "description": "AWS Cloudtrail: $(aws.eventSource) - $(aws.eventName) - high number of deleted objects."
+  },
+  "80253": {
+   "level": 3,
+   "description": "AWS Cloudtrail: $(aws.eventSource) - $(aws.eventName) - User login success."
+  },
+  "80254": {
+   "level": 5,
+   "description": "AWS Cloudtrail: $(aws.eventSource) - $(aws.eventName) - User login failed."
+  },
+  "80255": {
+   "level": 10,
+   "description": "AWS Cloudtrail: $(aws.eventSource) - $(aws.eventName) - Possible break in attempt (high number of login attempts)."
+  },
+  "80301": {
+   "level": 3,
+   "description": "AWS GuardDuty: $(aws.service.action.actionType) - $(aws.title)."
+  },
+  "80302": {
+   "level": 6,
+   "description": "AWS GuardDuty: $(aws.service.action.actionType) - $(aws.title)."
+  },
+  "80303": {
+   "level": 10,
+   "description": "AWS GuardDuty: $(aws.service.action.actionType) - $(aws.title)."
+  },
+  "80305": {
+   "level": 3,
+   "description": "AWS GuardDuty: $(aws.service.action.actionType) - $(aws.title) [IP: $(aws.service.action.portProbeAction.portProbeDetails.remoteIpDetails.ipAddressV4)] [Port: $(aws.service.action.portProbeAction.portProbeDetails.localPortDetails.port)]."
+  },
+  "80306": {
+   "level": 6,
+   "description": "AWS GuardDuty: $(aws.service.action.actionType) - $(aws.title) [IP: $(aws.service.action.portProbeAction.portProbeDetails.remoteIpDetails.ipAddressV4)] [Port: $(aws.service.action.portProbeAction.portProbeDetails.localPortDetails.port)]."
+  },
+  "80307": {
+   "level": 10,
+   "description": "AWS GuardDuty: $(aws.service.action.actionType) - $(aws.title) [IP: $(aws.service.action.portProbeAction.portProbeDetails.remoteIpDetails.ipAddressV4)] [Port: $(aws.service.action.portProbeAction.portProbeDetails.localPortDetails.port)]."
+  },
+  "80721": {
+   "level": 10,
+   "description": "Auditd: User becomes root."
+  },
+  "80742": {
+   "level": 5,
+   "description": "Auditd: User ID changed."
+  },
+  "80790": {
+   "level": 3,
+   "description": "Audit: Created: $(audit.file.name)."
+  },
+  "80791": {
+   "level": 3,
+   "description": "Audit: Deleted: $(audit.file.name)."
+  },
+  "81101": {
+   "level": 3,
+   "description": "Attached USB Storage"
+  },
+  "86601": {
+   "level": 3,
+   "description": "Suricata: Alert - $(alert.signature)"
+  },
+  "87101": {
+   "level": 3,
+   "description": "VirusTotal: Error: Public API request rate limit reached"
+  },
+  "87102": {
+   "level": 3,
+   "description": "VirusTotal: Error: Check credentials"
+  },
+  "87103": {
+   "level": 3,
+   "description": "VirusTotal: Alert - No records in VirusTotal database"
+  },
+  "87104": {
+   "level": 3,
+   "description": "VirusTotal: Alert - $(virustotal.source.file) - No positives found"
+  },
+  "87105": {
+   "level": 12,
+   "description": "VirusTotal: Alert - $(virustotal.source.file) - $(virustotal.positives) engines detected this file"
+  },
+  "87802": {
+   "level": 3,
+   "description": "Azure: AD $(activityDisplayName)"
+  },
+  "87811": {
+   "level": 3,
+   "description": "Azure: Log analytics: $(OperationName)"
+  },
+  "87902": {
+   "level": 5,
+   "description": "Docker: Container $(docker.Actor.Attributes.name) destroyed"
+  },
+  "87907": {
+   "level": 3,
+   "description": "Docker: Command launched in container $(docker.Actor.Attributes.name). Action: \"$(docker.Action)\""
+  },
+  "87908": {
+   "level": 5,
+   "description": "Docker: Started shell session in container $(docker.Actor.Attributes.name)"
+  },
+  "87910": {
+   "level": 3,
+   "description": "Docker: Copied a file from host to $(docker.Actor.Attributes.name)"
+  },
+  "89501": {
+   "level": 12,
+   "description": "WmiConsumerEvent created, possible persistence tactic"
+  },
+  "89502": {
+   "level": 14,
+   "description": "WmiConsumerEvent created, possible persistence tactic using command-executing binaries"
+  },
+  "91152": {
+   "level": 9,
+   "description": "GitHub Environment Remove actions secret."
+  },
+  "91197": {
+   "level": 7,
+   "description": "GitHub Organization create actions secret."
+  },
+  "91556": {
+   "level": 12,
+   "description": "Office 365: Phishing and malware events from Exchange Online Protection and Microsoft Defender for Office 365."
+  },
+  "91700": {
+   "level": 14,
+   "description": "Office 365: Detected malware in file $(office365.SourceFileName)."
+  },
+  "91724": {
+   "level": 10,
+   "description": "Office 365: Suspicious download activity by user: $(office365.UserId)"
+  },
+  "91809": {
+   "level": 10,
+   "description": "Powershell script may be using Base64 decoding method"
+  },
+  "91810": {
+   "level": 10,
+   "description": "Powershell script may be executing suspicious code with CreateThread API"
+  },
+  "91815": {
+   "level": 4,
+   "description": "Powershell executing process discovery"
+  },
+  "91816": {
+   "level": 4,
+   "description": "Powershell script querying system environment variables"
+  },
+  "91817": {
+   "level": 4,
+   "description": "Powershell script executed \"ConvertSidToStringSid\" API. Possible domain SID enumeration"
+  },
+  "91818": {
+   "level": 4,
+   "description": "Powershell script executed \"New-Service\" command"
+  },
+  "91819": {
+   "level": 4,
+   "description": "Powershell script searching filesystem"
+  },
+  "91820": {
+   "level": 4,
+   "description": "Powershell script recursively collected files from a filesystem search"
+  },
+  "91823": {
+   "level": 14,
+   "description": "Powershell script used \"Invoke-command\" cmdlet to execute code on remote computer"
+  },
+  "91837": {
+   "level": 4,
+   "description": "Powershell executed \"Get-Content -Stream or Invoke-Expresion\". Possible string execution as code"
+  },
+  "91844": {
+   "level": 12,
+   "description": "Possible addition of new item to Windows startup registry"
+  },
+  "91845": {
+   "level": 10,
+   "description": "Outlook add-in was loaded by powershell, possible use for email collection"
+  },
+  "91846": {
+   "level": 10,
+   "description": "Powershell used .NET compression method, possible data extraction operation"
+  },
+  "92000": {
+   "level": 4,
+   "description": "Scripting interpreter spawned a new process"
+  },
+  "92002": {
+   "level": 6,
+   "description": "Scripting interpreter spawned Windows command shell instance"
+  },
+  "92008": {
+   "level": 12,
+   "description": "Windows Defender real time monitoring was disabled by Powershell command"
+  },
+  "92024": {
+   "level": 14,
+   "description": "Powershell used to copy SAM hive from VSS"
+  },
+  "92029": {
+   "level": 6,
+   "description": "Powershell executed script from suspicious location"
+  },
+  "92038": {
+   "level": 12,
+   "description": "A connection to cloud resource was started by $(win.eventdata.parentImage)"
+  },
+  "92046": {
+   "level": 12,
+   "description": "Possible use of fodhelper.exe used to bypass UAC and execute of malicious software"
+  },
+  "92047": {
+   "level": 12,
+   "description": "Office application started mshta.exe"
+  },
+  "92048": {
+   "level": 15,
+   "description": "Office application started mshta.exe and executed scripting command"
+  },
+  "92055": {
+   "level": 12,
+   "description": "Known auto-elevated utility $(win.eventdata.originalFileName) may have been used to bypass UAC"
+  },
+  "92057": {
+   "level": 12,
+   "description": "Powershell.exe spawned a powershell process which executed a base64 encoded command"
+  },
+  "92065": {
+   "level": 6,
+   "description": "Powershell.exe launched by binary $(win.eventdata.parentImage) in a suspicious location"
+  },
+  "92068": {
+   "level": 3,
+   "description": "PSEXEC was used to execute: $(win.eventdata.commandLine)"
+  },
+  "92070": {
+   "level": 6,
+   "description": "Windows management instrumentation (WMI) created a powershell process"
+  },
+  "92071": {
+   "level": 12,
+   "description": "A powershell process created by WMI executed a base64 encoded command"
+  },
+  "92073": {
+   "level": 6,
+   "description": "Powershell executing certutil to decode a file"
+  },
+  "92102": {
+   "level": 6,
+   "description": "Suspicious DCOM/RPC activity from Powershell process"
+  },
+  "92103": {
+   "level": 6,
+   "description": "LDAP activity from Powershell process, possible remote system discovery"
+  },
+  "92104": {
+   "level": 15,
+   "description": "Suspicious binary created network connection to $(win.eventdata.destinationIp):$(win.eventdata.destinationPort)"
+  },
+  "92105": {
+   "level": 3,
+   "description": "Possible suspicious access to Windows admin shares"
+  },
+  "92106": {
+   "level": 3,
+   "description": "Windows System process activity over SMB port - Possible suspicious access to Windows admin shares"
+  },
+  "92107": {
+   "level": 4,
+   "description": "Script generated suspicious network activity over TCP protocol"
+  },
+  "92110": {
+   "level": 4,
+   "description": "Detected WinRM activity from $(win.eventdata.sourceIp) to $(win.eventdata.destinationIp)"
+  },
+  "92151": {
+   "level": 12,
+   "description": "Binary loaded PowerShell automation library - Possible unmanaged Powershell execution by suspicious process"
+  },
+  "92156": {
+   "level": 12,
+   "description": "Office application loaded vbeui.dll module. May be used to execute scripting code"
+  },
+  "92202": {
+   "level": 6,
+   "description": "Executable dropped in Windows root folder by $(win.eventdata.image) process. Possible abuse of Windows admin shares"
+  },
+  "92203": {
+   "level": 6,
+   "description": "Executable file created by powershell: $(win.eventdata.targetFilename)"
+  },
+  "92204": {
+   "level": 9,
+   "description": "Powershell process created executable file in AppData temp folder"
+  },
+  "92212": {
+   "level": 14,
+   "description": "Suspicious file compression activity by powershell: $(win.eventdata.targetFilename)"
+  },
+  "92213": {
+   "level": 15,
+   "description": "Executable file dropped in folder commonly used by malware"
+  },
+  "92214": {
+   "level": 15,
+   "description": "Suspicious file created by Microsoft Office process: $(win.eventdata.image) created $(win.eventdata.targetFilename)"
+  },
+  "92218": {
+   "level": 6,
+   "description": "Possible abuse of Windows admin shares by binary dropped in Windows root folder by system process"
+  },
+  "92220": {
+   "level": 6,
+   "description": "$(win.eventdata.targetFilename) binary created in Windows root folder by WinRM process $(win.eventdata.image)"
+  },
+  "92226": {
+   "level": 14,
+   "description": "Powershell process has copied an executable file to Windows start-up folder"
+  },
+  "92301": {
+   "level": 12,
+   "description": "Suspicious file extension detected in registry ASEP to be executed on next logon"
+  },
+  "92304": {
+   "level": 6,
+   "description": "Modified registry key associated to UAC bypass by auto-elevated processes"
+  },
+  "92307": {
+   "level": 3,
+   "description": "Evidence of new service creation found in registry under $(win.eventdata.targetObject) binary is: $(win.eventdata.details)"
+  },
+  "92400": {
+   "level": 12,
+   "description": "Possible code injection on explorer.exe by $(win.eventdata.sourceImage)"
+  },
+  "92602": {
+   "level": 12,
+   "description": "Suspicious python script matches Impacket signature, possible use of stolen credentials or pass the hash attack."
+  },
+  "92603": {
+   "level": 6,
+   "description": "A file was copied to this system over SSH using SCP."
+  },
+  "92650": {
+   "level": 12,
+   "description": "New Windows Service Created to start from windows root path. Suspicious event as the binary may have been dropped using Windows Admin Shares."
+  },
+  "92652": {
+   "level": 6,
+   "description": "Successful Remote Logon Detected - User:$(win.eventdata.subjectDomainName)\\$(win.eventdata.targetUserName) - NTLM authentication, possible pass-the-hash attack."
+  },
+  "92653": {
+   "level": 3,
+   "description": "User: $(win.eventdata.subjectDomainName)\\$(win.eventdata.targetUserName) logged using Remote Desktop Connection (RDP) from ip:$(win.eventdata.ipAddress)."
+  },
+  "92656": {
+   "level": 15,
+   "description": "User: $(win.eventdata.subjectDomainName)\\$(win.eventdata.targetUserName) logged using Remote Desktop Connection (RDP) from loopback address, possible exploit over reverse tunneling using stolen credentials."
+  },
+  "92657": {
+   "level": 6,
+   "description": "Successful Remote Logon Detected - User:$(win.eventdata.subjectDomainName)\\$(win.eventdata.targetUserName) - NTLM authentication, possible pass-the-hash attack - Possible RDP connection. Verify that $(win.eventdata.workstationName) is allowed to perform RDP connections"
+  },
+  "92900": {
+   "level": 12,
+   "description": "Lsass process was accessed by $(win.eventdata.sourceImage) with read permissions, possible credential dump"
+  },
+  "99503": {
+   "level": 6,
+   "description": "MS Graph message: The alert/incident has not been resolved and is not a false positive."
+  },
+  "99535": {
+   "level": 12,
+   "description": "MS Graph Message: Indicators that the system is potentially affected by ransomware have been detected. Check the system for signs of infection."
+  },
+  "99548": {
+   "level": 12,
+   "description": "MS Graph message: Indicators that the system is performing data exfiltration have been detected. This alert usually originates from common malware and threats, rather than APT activity. Check the system for signs of infection."
+  },
+  "99594": {
+   "level": 15,
+   "description": "MS Graph message: Indicators that the system is infected with ransomware have been detected. Requires immediate action."
+  },
+  "99855": {
+   "level": 12,
+   "description": "AWS Security Hub - Amazon S3 general purpose bucket permits public read access."
+  }
+ }
+}
