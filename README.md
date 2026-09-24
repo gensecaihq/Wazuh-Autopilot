@@ -48,12 +48,16 @@ The demo runs against a simulated Wazuh fleet (`mock-wazuh/`: same tools and sch
 
 For production, `cp .env.example .env`, point it at your Wazuh MCP Server and model provider, and run `docker compose up -d`. The first visit opens the setup wizard. See [docs/QUICKSTART.md](docs/QUICKSTART.md) and [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
 
+Before enabling active response: the MCP key needs `wazuh:write` scope, and `isolate_host`, `kill_process` and `quarantine_file` rely on active-response scripts that don't ship with Wazuh, so deploy them on your agents first ([details](docs/AUTONOMY_AND_APPROVALS.md#action-catalog)).
+
+**Upgrading from 1.x:** 3.0 replaces the Node Runtime Service and the OpenClaw, Hermes and NemoClaw profiles with the Strands platform, and there's no in-place migration. Deploy 3.0 next to your existing install, point it at the same Wazuh MCP Server, and retire the old one once you're happy. Details in the [changelog](CHANGELOG.md).
+
 ## What you get
 
 | | |
 |---|---|
 | **Agent swarm** | SOC Commander, Tier 1–3 analysts, CTI analyst, threat hunter, vulnerability manager, IR lead, SecOps engineer, detection engineer, GRC analyst, Wazuh platform engineer and SOC manager. Workflows run as a Strands `Swarm` (agents hand off to each other) or a `Graph` (fixed pipeline). |
-| **Skills** | 37 [Agent Skills](https://agentskills.io) (`SKILL.md`): 9 Wazuh-specific skills (MCP querying, rules and decoders, FIM, SCA, malware, Windows/Sysmon, cloud and containers, active response, platform health), 7 incident-response playbooks (brute force, lateral movement, privilege escalation, ransomware, suspicious PowerShell, data exfiltration, vulnerability spike). Agents load them on demand. |
+| **Skills** | 37 [Agent Skills](https://agentskills.io) (`SKILL.md`): 9 Wazuh-specific skills (MCP querying, rules and decoders, FIM, SCA, malware, Windows/Sysmon, cloud and containers, active response, platform health), 7 incident-response playbooks (brute force, lateral movement, privilege escalation, ransomware, suspicious PowerShell, data exfiltration, vulnerability spike). Agents load them on demand. Every Wazuh rule ID the skills cite is checked against the official Wazuh 4.14 ruleset in CI. |
 | **Standards** | NIST CSF 2.0, SP 800-61r3, SP 800-53r5, MITRE ATT&CK and D3FEND, CIS v8.1, ISO/IEC 27001:2022, PCI DSS v4.0.1, SANS PICERL, CISA KEV / FIRST EPSS / SSVC, Sigma, OWASP LLM Top 10. |
 | **Autonomy policy** | Four levels: observe, recommend, supervised, autonomous. Plus per-action rules (confidence floor, hourly budget), per-agent caps, protected targets, a two-person rule and a business-hours limit. Critical actions always need a human. |
 | **Safe by construction** | Agents never receive state-changing Wazuh tools: the MCP tool filter and a pre-tool hook both block them. The platform runs approved actions, verifies them with `wazuh_check_*`, and can roll them back. |
